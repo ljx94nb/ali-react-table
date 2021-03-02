@@ -59,6 +59,8 @@ export default function buildTree<ID extends string, PID extends string, T exten
     (wrapper) => wrapper.children,
   )
 
+  // 返回结构化的数据
+  console.log(unwrapRecursively(topLevelWrappers))
   return unwrapRecursively(topLevelWrappers)
 
   // todo 可能存在无线递归的情况

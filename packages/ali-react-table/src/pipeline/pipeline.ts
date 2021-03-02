@@ -39,7 +39,11 @@ export interface TablePipelineCtx {
  *
  * 4. snapshots，调用 pipeline.snapshot(name) 可以记录当前的状态，后续可以通过 name 来读取保存的状态
  * */
+/**
+ * 拓展table的pipeline类
+ */
 export class TablePipeline {
+  // 快照：保存表格的props（datasource，columns）
   private readonly _snapshots: { [key: string]: PipelineSnapshot } = {}
   private readonly _rowPropsGetters: Array<RowPropsGetter> = []
   private _dataSource: any[]
@@ -79,6 +83,7 @@ export class TablePipeline {
     return this
   }
 
+  // 获取datasource
   getDataSource(name?: string) {
     if (name == null) {
       return this._dataSource
@@ -87,6 +92,7 @@ export class TablePipeline {
     }
   }
 
+  // 获取columns
   getColumns(name?: string) {
     if (name == null) {
       return this._columns
@@ -99,7 +105,7 @@ export class TablePipeline {
     return this.state[stateKey] ?? defaultValue
   }
 
-  /** 将 stateKey 对应的状态设置为 partialState  */
+  /** 将 stateKey 对应的状态设置为 partialState, 将表格配置存储为state  */
   setStateAtKey(stateKey: string, partialState: any, extraInfo?: any) {
     this.setState((prev: any) => ({ ...prev, [stateKey]: partialState }), stateKey, partialState, extraInfo)
   }
@@ -120,6 +126,7 @@ export class TablePipeline {
 
     this._dataSource = input.dataSource
     this._columns = input.columns
+    // debugger
 
     this.snapshot('input')
 
@@ -164,7 +171,10 @@ export class TablePipeline {
     return this.dataSource(next.dataSource).columns(next.columns)
   }
 
-  /** 使用 pipeline 功能拓展 */
+  /** 使用 pipeline 功能拓展
+   *  @params step 参数为pipeline实例的函数
+   *  @returns 返回执行这个函数的结果
+   */
   use(step: (pipeline: this) => this) {
     return step(this)
   }
@@ -203,6 +213,8 @@ export class TablePipeline {
 }
 
 export function useTablePipeline(ctx?: Partial<TablePipelineCtx>) {
+  // 保存pipe数据状态
   const [state, setState] = useState<any>({})
+  // 返回一个pipeline实例
   return new TablePipeline({ state, setState, ctx })
 }

@@ -1,11 +1,16 @@
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const path = require('path')
+const apiMocker = require('webpack-api-mocker')
 
 module.exports = (env = {}) => {
   return {
     entry: path.resolve(__dirname, 'src/main.tsx'),
-
+    mode: 'production', // 配置sourcemap的必须项
+    devtool: 'source-map', // 配置sourcemap的必须项
+    optimization: {
+      minimize: false,
+    }, // 配置sourcemap的必须项
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'bundle.js',
@@ -47,6 +52,9 @@ module.exports = (env = {}) => {
     devServer: {
       hot: true,
       port: 8080,
+      before(app) {
+        apiMocker(app, path.resolve(__dirname, './proxy.js'))
+      },
       after() {
         const openBrowser = require('react-dev-utils/openBrowser')
         setTimeout(() => {

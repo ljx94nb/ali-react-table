@@ -149,6 +149,24 @@
     react-transition-group "^2.2.1"
     shallow-element-equals "^1.0.1"
 
+"@alifd/next@^1.22.10":
+  version "1.22.10"
+  resolved "https://registry.npmjs.org/@alifd/next/-/next-1.22.10.tgz#7c2b7ce34c5131c0faeaca6ea0c08c68dcfc2cc2"
+  integrity sha512-Oq7a+dFe17jU4YXagSqmYX3yvvruuT3Z+TIN64n1Fce06Vq0O19jQnCZJVkf3WiDc3vYEHVqF1k5GdjObwFCBQ==
+  dependencies:
+    "@alifd/field" "~1.4.1"
+    "@alifd/validate" "~1.2.0"
+    babel-runtime "^6.26.0"
+    classnames "^2.2.3"
+    dayjs "^1.9.6"
+    hoist-non-react-statics "^2.1.0"
+    lodash.clonedeep "^4.5.0"
+    prop-types "^15.6.0"
+    react-lifecycles-compat "^3.0.4"
+    react-transition-group "^2.2.1"
+    resize-observer-polyfill "^1.5.1"
+    shallow-element-equals "^1.0.1"
+
 "@alifd/validate@^1.2.0", "@alifd/validate@~1.2.0":
   version "1.2.0"
   resolved "https://registry.npm.taobao.org/@alifd/validate/download/@alifd/validate-1.2.0.tgz#252e0add24e64efd54fe611ba8c66d0147d850f6"
@@ -3424,7 +3442,7 @@ bn.js@^5.0.0, bn.js@^5.1.1:
   resolved "https://registry.npm.taobao.org/bn.js/download/bn.js-5.1.3.tgz#beca005408f642ebebea80b042b4d18d2ac0ee6b"
   integrity sha1-vsoAVAj2Quvr6oCwQrTRjSrA7ms=
 
-body-parser@1.19.0:
+body-parser@1.19.0, body-parser@^1.19.0:
   version "1.19.0"
   resolved "https://registry.npm.taobao.org/body-parser/download/body-parser-1.19.0.tgz#96b2709e57c9c4e09a6fd66a8fd979844f69f08a"
   integrity sha1-lrJwnlfJxOCab9Zqj9l5hE9p8Io=
@@ -3953,7 +3971,7 @@ cheerio@^0.22.0:
     lodash.reject "^4.4.0"
     lodash.some "^4.4.0"
 
-chokidar@^2.1.8:
+chokidar@^2.1.5, chokidar@^2.1.8:
   version "2.1.8"
   resolved "https://registry.npm.taobao.org/chokidar/download/chokidar-2.1.8.tgz?cache=0&sync_timestamp=1610719440699&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fchokidar%2Fdownload%2Fchokidar-2.1.8.tgz#804b3a7b6a99358c3c5c61e71d8728f041cff917"
   integrity sha1-gEs6e2qZNYw8XGHnHYco8EHP+Rc=
@@ -4053,6 +4071,14 @@ clean-stack@^2.0.0:
   version "2.2.0"
   resolved "https://registry.npm.taobao.org/clean-stack/download/clean-stack-2.2.0.tgz?cache=0&sync_timestamp=1605702472163&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fclean-stack%2Fdownload%2Fclean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha1-7oRy27Ep5yezHooQpCfe6d/kAIs=
+
+clear-module@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/clear-module/-/clear-module-3.2.0.tgz#cbffcb1a873869c3ef07fc8e036851970c7c7272"
+  integrity sha512-5uO4iiezdJX/jozvfsXnMgWh/hTgOpXMeVqLfYe9RVUIajH/bU7xF9yvDVTq9JGUrBNefitISqd7rJ8jENgj/g==
+  dependencies:
+    parent-module "^1.0.1"
+    resolve-from "^4.0.0"
 
 cli-boxes@^2.2.0:
   version "2.2.1"
@@ -4213,6 +4239,11 @@ colorette@^1.2.1:
   version "1.2.1"
   resolved "https://registry.npm.taobao.org/colorette/download/colorette-1.2.1.tgz#4d0b921325c14faf92633086a536db6e89564b1b"
   integrity sha1-TQuSEyXBT6+SYzCGpTbbbolWSxs=
+
+colors-cli@^1.0.21:
+  version "1.0.27"
+  resolved "https://registry.npmjs.org/colors-cli/-/colors-cli-1.0.27.tgz#1a33f6cfc013cdb55e50bac0bff1a8f5f0866cf8"
+  integrity sha512-oyHDobdhzZDRHzVqOX+0owvXkS6recku25PUutP89BggJ3HikYTBpa7HZOoiAwhKFgHdyfJ+YNJyqxM4kBcEUg==
 
 combined-stream@^1.0.6, combined-stream@~1.0.6:
   version "1.0.8"
@@ -5129,6 +5160,11 @@ dayjs@^1.8.30:
   resolved "https://registry.npm.taobao.org/dayjs/download/dayjs-1.10.3.tgz?cache=0&sync_timestamp=1610178181125&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fdayjs%2Fdownload%2Fdayjs-1.10.3.tgz#cf3357c8e7f508432826371672ebf376cb7d619b"
   integrity sha1-zzNXyOf1CEMoJjcWcuvzdst9YZs=
 
+dayjs@^1.9.6:
+  version "1.10.4"
+  resolved "https://registry.npmjs.org/dayjs/-/dayjs-1.10.4.tgz#8e544a9b8683f61783f570980a8a80eaf54ab1e2"
+  integrity sha512-RI/Hh4kqRc1UKLOAf/T5zdMMX5DQIlDxwUe3wSyMMnEbGunnpENCdbUgM+dW7kXidZqCttBrmw7BhN4TMddkCw==
+
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.0:
   version "2.6.9"
   resolved "https://registry.npm.taobao.org/debug/download/debug-2.6.9.tgz?cache=0&sync_timestamp=1607566580543&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fdebug%2Fdownload%2Fdebug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
@@ -5792,6 +5828,11 @@ eval@^0.1.4:
   dependencies:
     require-like ">= 0.1.1"
 
+eventemitter3@^3.0.0:
+  version "3.1.2"
+  resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-3.1.2.tgz#2d3d48f9c346698fce83a85d7d664e98535df6e7"
+  integrity sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==
+
 eventemitter3@^4.0.0:
   version "4.0.7"
   resolved "https://registry.npm.taobao.org/eventemitter3/download/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
@@ -5918,7 +5959,7 @@ expect@^26.6.2:
     jest-message-util "^26.6.2"
     jest-regex-util "^26.0.0"
 
-express@^4.16.3, express@^4.17.1:
+express@^4.16.3, express@^4.16.4, express@^4.17.1:
   version "4.17.1"
   resolved "https://registry.npm.taobao.org/express/download/express-4.17.1.tgz#4491fc38605cf51f8629d39c2b5d026f98a4c134"
   integrity sha1-RJH8OGBc9R+GKdOcK10Cb5ikwTQ=
@@ -7066,6 +7107,15 @@ http-proxy-middleware@0.19.1:
     is-glob "^4.0.0"
     lodash "^4.17.11"
     micromatch "^3.1.10"
+
+http-proxy@1.17.0:
+  version "1.17.0"
+  resolved "https://registry.npmjs.org/http-proxy/-/http-proxy-1.17.0.tgz#7ad38494658f84605e2f6db4436df410f4e5be9a"
+  integrity sha512-Taqn+3nNvYRfJ3bGvKfBSRwy1v6eePlm3oc/aWVxZp57DQr5Eq3xhKJi7Z4hZpS8PC3H4qI+Yly5EmFacGuA/g==
+  dependencies:
+    eventemitter3 "^3.0.0"
+    follow-redirects "^1.0.0"
+    requires-port "^1.0.0"
 
 http-proxy@^1.17.0:
   version "1.18.1"
@@ -8508,6 +8558,11 @@ loader-utils@^2.0.0:
     emojis-list "^3.0.0"
     json5 "^2.1.2"
 
+local-ip-url@^1.0.1:
+  version "1.0.3"
+  resolved "https://registry.npmjs.org/local-ip-url/-/local-ip-url-1.0.3.tgz#4a4bf4eff91a847f870918dff3e1e3273605a81d"
+  integrity sha512-OyHVtNHgSmxr8B+6iA8sxlGrdNQJdr6M8db5/v83BdZA/cYe7+0i1XsyBQ0AoRj2nK32O3znEuPU9/b8TS6iww==
+
 locate-path@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npm.taobao.org/locate-path/download/locate-path-3.0.0.tgz#dbec3b3ab759758071b58fe59fc41871af21400e"
@@ -9788,7 +9843,7 @@ param-case@^3.0.3:
     dot-case "^3.0.4"
     tslib "^2.0.3"
 
-parent-module@^1.0.0:
+parent-module@^1.0.0, parent-module@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npm.taobao.org/parent-module/download/parent-module-1.0.1.tgz#691d2709e78c79fae3a156622452d00762caaaa2"
   integrity sha1-aR0nCeeMefrjoVZiJFLQB2LKqqI=
@@ -9949,6 +10004,11 @@ path-to-regexp@^1.7.0:
   integrity sha1-iHs7qdhDk+h6CgufTLdWGYtTVIo=
   dependencies:
     isarray "0.0.1"
+
+path-to-regexp@^3.0.0:
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-3.2.0.tgz#fa7877ecbc495c601907562222453c43cc204a5f"
+  integrity sha512-jczvQbCUS7XmS7o+y1aEO9OBVFeZBQ1MDSEqmO7xSoPgOPoowY/SxLpZ6Vh97/8qHZOteiCKb7gkG9gA2ZUxJA==
 
 path-type@^1.0.0:
   version "1.1.0"
@@ -14076,6 +14136,21 @@ webidl-conversions@^6.1.0:
   version "6.1.0"
   resolved "https://registry.npm.taobao.org/webidl-conversions/download/webidl-conversions-6.1.0.tgz#9111b4d7ea80acd40f5270d666621afa78b69514"
   integrity sha1-kRG01+qArNQPUnDWZmIa+ni2lRQ=
+
+webpack-api-mocker@^1.7.6:
+  version "1.7.6"
+  resolved "https://registry.npmjs.org/webpack-api-mocker/-/webpack-api-mocker-1.7.6.tgz#040f28e9c01925775327c2b062ab503c99c7b5fb"
+  integrity sha512-lqltQktY0F7Y/5IjWmppKgq48QaIyR2PBaVzR978Df6Fa+jjj1+QLhjZxgYXmF/RPUZKonRiVxq5ris9ZMB+iQ==
+  dependencies:
+    body-parser "^1.19.0"
+    chokidar "^2.1.5"
+    clear-module "^3.2.0"
+    colors-cli "^1.0.21"
+    detect-port "^1.3.0"
+    express "^4.16.4"
+    http-proxy "1.17.0"
+    local-ip-url "^1.0.1"
+    path-to-regexp "^3.0.0"
 
 webpack-bundle-analyzer@^3.6.1:
   version "3.9.0"

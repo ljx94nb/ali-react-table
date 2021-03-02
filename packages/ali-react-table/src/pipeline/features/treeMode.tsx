@@ -1,5 +1,5 @@
 import cx from 'classnames'
-import React from 'react'
+import React, { useState } from 'react'
 import { ExpansionCell, icons, InlineFlexCell } from '../../common-views'
 import { ArtColumn } from '../../interfaces'
 import { internals } from '../../internals'
@@ -7,6 +7,11 @@ import { isLeafNode as standardIsLeafNode, mergeCellProps } from '../../utils'
 import { TablePipeline } from '../pipeline'
 
 export const treeMetaSymbol = Symbol('treeMetaSymbol')
+
+interface TreePath {
+  depth: number
+  key: string
+}
 
 export interface TreeModeFeatureOptions {
   /** 非受控用法：默认展开的 keys */
@@ -16,7 +21,12 @@ export interface TreeModeFeatureOptions {
   openKeys?: string[]
 
   /** 受控用法：展开 keys 改变的回调 */
-  onChangeOpenKeys?(nextKeys: string[], key: string, action: 'expand' | 'collapse'): void
+  /**
+   * @param nextKey string[] 当前展开的层级存储primaryKey的数组
+   * @param key string 展开后的当前层级的primryKey
+   * @param action string 'collapse | expand'
+   */
+  onChangeOpenKeys?(nextKeys: string[], key: string, action: 'expand' | 'collapse', pathArr?: TreePath[]): void
 
   /** 自定义叶子节点的判定逻辑 */
   isLeafNode?(node: any, nodeMeta: { depth: number; expanded: boolean; rowKey: string }): boolean
@@ -42,6 +52,9 @@ export interface TreeModeFeatureOptions {
 
 export function treeMode(opts: TreeModeFeatureOptions = {}) {
   return function treeModeStep(pipeline: TablePipeline) {
+    // 存储tree的路径
+    let [pathArr, setPathArr] = useState<TreePath[]>([])
+
     const stateKey = 'treeMode'
     const ctx = pipeline.ctx
 
@@ -52,21 +65,43 @@ export function treeMode(opts: TreeModeFeatureOptions = {}) {
 
     const openKeys: string[] = opts.openKeys ?? pipeline.getStateAtKey(stateKey) ?? opts.defaultOpenKeys ?? []
     const openKeySet = new Set(openKeys)
-    const onChangeOpenKeys: TreeModeFeatureOptions['onChangeOpenKeys'] = (nextKeys: string[], key, action) => {
-      opts.onChangeOpenKeys?.(nextKeys, key, action)
+    const onChangeOpenKeys: TreeModeFeatureOptions['onChangeOpenKeys'] = (
+      nextKeys: string[],
+      key,
+      action,
+      pathArr: TreePath[],
+    ) => {
+      opts.onChangeOpenKeys?.(nextKeys, key, action, pathArr)
       pipeline.setStateAtKey(stateKey, nextKeys, { key, action })
+      // 将tree的路径存储为state
+      setPathArr(pathArr)
     }
 
-    const toggle = (rowKey: string) => {
+    const toggle = (rowKey: string, depth?: number) => {
+      if (pathArr.length === 0) {
+        pathArr.push({ depth, key: rowKey })
+      } else {
+        const depthArr = pathArr.map((i: TreePath) => i.depth)
+        if (depthArr.includes(depth)) {
+          pathArr = pathArr.filter((i: TreePath) => i.depth !== depth)
+          pathArr.push({ depth, key: rowKey })
+        } else {
+          pathArr.push({
+            depth,
+            key: rowKey,
+          })
+        }
+      }
       const expanded = openKeySet.has(rowKey)
       if (expanded) {
         onChangeOpenKeys(
           openKeys.filter((key) => key !== rowKey),
           rowKey,
           'collapse',
+          pathArr,
         )
       } else {
-        onChangeOpenKeys([...openKeys, rowKey], rowKey, 'expand')
+        onChangeOpenKeys([...openKeys, rowKey], rowKey, 'expand', pathArr)
       }
     }
     const isLeafNode = opts.isLeafNode ?? standardIsLeafNode
@@ -168,7 +203,7 @@ export function treeMode(opts: TreeModeFeatureOptions = {}) {
           return prevProps
         }
 
-        const { isLeaf, rowKey } = record[treeMetaKey]
+        const { isLeaf, rowKey, depth } = record[treeMetaKey]
         if (isLeaf) {
           return prevProps
         }
@@ -178,7 +213,7 @@ export function treeMode(opts: TreeModeFeatureOptions = {}) {
             if (stopClickEventPropagation) {
               e.stopPropagation()
             }
-            toggle(rowKey)
+            toggle(rowKey, depth)
           },
           style: { cursor: 'pointer' },
         })

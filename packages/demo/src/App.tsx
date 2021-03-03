@@ -49,10 +49,18 @@ function App() {
   const pipeline = useTablePipeline({ components: fusion }) // 传组件定义表格的总体样式
     .input({ dataSource: state.data, columns }) // 输入datasource和列项目
     .primaryKey('id') // 输入每一行的唯一id
+    .mapColumns(([firstCol, ...rest]) => [
+      firstCol,
+      // 重复几次 columns，看起来更加丰满
+      ...rest,
+      ...rest,
+      ...rest,
+      ...rest,
+    ])
     // .use(features.buildTree('id', 'parent_id')) // 利用use为表格添加功能，这里把数据处理成数状结构
     .use(
       features.treeMode({
-        defaultOpenKeys: ['name'],
+        openKeys,
         onChangeOpenKeys(nextKeys, key, action, pathArr) {
           console.log(nextKeys, key, action, pathArr)
           if (state.isLoading) {

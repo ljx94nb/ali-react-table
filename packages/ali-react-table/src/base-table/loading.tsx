@@ -34,9 +34,16 @@ export interface LoadingContentWrapperProps {
   children: ReactNode
 }
 
+/**
+ * 表格加载数据时包裹数据body的盒子
+ * 改造：加入pointEventer当加载数据时表格数据不可操作
+ */
 function DefaultLoadingContentWrapper({ children, visible }: LoadingContentWrapperProps) {
   return (
-    <div className="art-loading-content-wrapper" style={{ filter: visible ? 'blur(1px)' : 'none' }}>
+    <div
+      className="art-loading-content-wrapper"
+      style={{ filter: visible ? 'blur(1px)' : 'none', pointerEvents: visible ? 'none' : 'auto' }}
+    >
       {children}
     </div>
   )

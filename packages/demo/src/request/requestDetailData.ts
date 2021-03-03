@@ -5,7 +5,7 @@ interface RequestI {
 export const requestDetailData = (options: RequestI) => {
   const { key } = options
   return new Promise((resolve, reject) => {
-    fetch('detail_data')
+    fetch('large_detail_data')
       .then((res) => {
         return res.json()
       })

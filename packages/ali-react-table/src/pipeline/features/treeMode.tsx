@@ -25,6 +25,7 @@ export interface TreeModeFeatureOptions {
    * @param nextKey string[] 当前展开的层级存储primaryKey的数组
    * @param key string 展开后的当前层级的primryKey
    * @param action string 'collapse | expand'
+   * @param pathArr 记录展开tree的深度
    */
   onChangeOpenKeys?(nextKeys: string[], key: string, action: 'expand' | 'collapse', pathArr?: TreePath[]): void
 

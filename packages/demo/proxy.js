@@ -9,6 +9,7 @@ function fromJSONFile(filename) {
 }
 const proxy = {
   'GET /data': fromJSONFile('data'),
-  'GET /detail_data': fromJSONFile('detail_data')
+  'GET /detail_data': fromJSONFile('detail_data'),
+  'GET /large_detail_data': fromJSONFile('large_detail_data')
 };
 module.exports = proxy;

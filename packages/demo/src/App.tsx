@@ -75,7 +75,7 @@ function App() {
       }),
     ) // 设置节点的展开功能：哪个节点展开、展开的回调等
 
-  return <BaseTable {...pipeline.getProps()} />
+  return <BaseTable defaultColumnWidth={120} isLoading={state.isLoading} {...pipeline.getProps()} />
 }
 
 export default App

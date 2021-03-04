@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { requestData, requestDetailData } from './request'
 import * as fusion from '@alifd/next'
 import { ratio, addChildren } from './utils'
-import { BaseTable, ArtColumn, useTablePipeline, features } from 'ali-react-table'
+import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 function App() {
   const columns: ArtColumn[] = [
@@ -44,19 +44,14 @@ function App() {
       isLoading: false,
       data,
     })
+    return keyData
   }
+
+  const { plugins, setPlugins } = usePlugins()
 
   const pipeline = useTablePipeline({ components: fusion }) // 传组件定义表格的总体样式
     .input({ dataSource: state.data, columns }) // 输入datasource和列项目
     .primaryKey('id') // 输入每一行的唯一id
-    .mapColumns(([firstCol, ...rest]) => [
-      firstCol,
-      // 重复几次 columns，看起来更加丰满
-      ...rest,
-      ...rest,
-      ...rest,
-      ...rest,
-    ])
     // .use(features.buildTree('id', 'parent_id')) // 利用use为表格添加功能，这里把数据处理成数状结构
     .use(
       features.treeMode({
@@ -73,7 +68,14 @@ function App() {
             // 如果当前展开了某一个节点，且该节点的子节点数据尚未加载，
             //  则调用 loadNodeDataByParentKey 加载更多数据
             const paths = pathArr.map((i) => i.key)
-            loadNodeDataByParentKey(paths)
+            loadNodeDataByParentKey(paths).then((data) => {
+              setPlugins(
+                new PaginationPlugin('paginationPlugin', {
+                  data: data as any,
+                  onChange: (currentPage) => {},
+                }),
+              )
+            })
           }
         },
         // 提供一个自定义的 isLeafNode 方法，使得表格为父节点正确渲染收拢/展开按钮
@@ -83,7 +85,8 @@ function App() {
       }),
     ) // 设置节点的展开功能：哪个节点展开、展开的回调等
 
-  return <BaseTable defaultColumnWidth={120} isLoading={state.isLoading} {...pipeline.getProps()} />
+  // console.log(plugins)
+  return <BaseTable defaultColumnWidth={120} isLoading={state.isLoading} {...pipeline.getProps()} plugins={plugins} />
 }
 
 export default App

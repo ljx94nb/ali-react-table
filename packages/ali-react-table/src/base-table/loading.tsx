@@ -39,6 +39,8 @@ export interface LoadingContentWrapperProps {
  * 改造：加入pointEventer当加载数据时表格数据不可操作
  */
 function DefaultLoadingContentWrapper({ children, visible }: LoadingContentWrapperProps) {
+  // visible 表示表格是否处于加载状态中
+  // children 是表格的实际内容
   return (
     <div
       className="art-loading-content-wrapper"

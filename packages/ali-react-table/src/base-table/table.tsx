@@ -10,7 +10,7 @@ import { getFullRenderRange, makeRowHeightManager } from './helpers/rowHeightMan
 import { TableDOMHelper } from './helpers/TableDOMUtils'
 import { getVisiblePartObservable } from './helpers/visible-part'
 import { HtmlTable } from './html-table'
-import { RenderInfo, ResolvedUseVirtual, VerticalRenderRange, VirtualEnum } from './interfaces'
+import { PipelinePlugin, RenderInfo, ResolvedUseVirtual, VerticalRenderRange, VirtualEnum } from './interfaces'
 import Loading, { LoadingContentWrapperProps } from './loading'
 import { BaseTableCSSVariables, Classes, LOCK_SHADOW_PADDING, StyledArtTableWrapper } from './styles'
 import {
@@ -44,6 +44,9 @@ export interface BaseTableProps {
   footerDataSource?: any[]
   /** 表格的列配置 */
   columns: ArtColumn[]
+
+  /** 插件对象 */
+  plugins?: PipelinePlugin
 
   /** 是否开启虚拟滚动 */
   useVirtual?: VirtualEnum | { horizontal?: VirtualEnum; vertical?: VirtualEnum; header?: VirtualEnum }
@@ -273,7 +276,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
   }
 
   private renderTableBody(info: RenderInfo) {
-    const { dataSource, getRowProps, primaryKey, isLoading, emptyCellHeight, footerDataSource } = this.props
+    const { dataSource, getRowProps, primaryKey, isLoading, emptyCellHeight, footerDataSource, plugins } = this.props
     const tableBodyClassName = cx(Classes.tableBody, Classes.horizontalScrollContainer, {
       'no-scrollbar': footerDataSource.length > 0,
     })

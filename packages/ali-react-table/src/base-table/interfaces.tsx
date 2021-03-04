@@ -46,3 +46,14 @@ export interface RenderInfo {
   /** 右侧锁定列的总宽度 */
   rightLockTotalWidth: number
 }
+
+// pagenationPlugin的结构
+export interface IPaginationPluginValue {
+  data?: any[]
+  onChange?(currentPage: number): void
+}
+
+// pipeline的plugins对象结构
+export interface PipelinePlugin {
+  paginationPlugin: IPaginationPluginValue
+}

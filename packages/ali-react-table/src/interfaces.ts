@@ -81,3 +81,8 @@ export interface HoverRange {
   start: number
   end: number
 }
+
+export interface IPlugin {
+  pluginName: string
+  pluginValue: any
+}

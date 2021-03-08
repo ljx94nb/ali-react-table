@@ -2,7 +2,7 @@ import cx from 'classnames'
 import React, { CSSProperties, ReactNode } from 'react'
 import { animationFrameScheduler, BehaviorSubject, combineLatest, noop, of, Subscription, timer } from 'rxjs'
 import * as op from 'rxjs/operators'
-import { ArtColumn } from '../interfaces'
+import { ArtColumn, ColWithRenderInfo } from '../interfaces'
 import { calculateRenderInfo } from './calculations'
 import { EmptyHtmlTable } from './empty'
 import TableHeader from './header'
@@ -101,6 +101,8 @@ export interface BaseTableProps {
   flowRoot?: 'auto' | 'self' | (() => HTMLElement | typeof window) | HTMLElement | typeof window
 
   getRowProps?(record: any, rowIndex: number): React.HTMLAttributes<HTMLTableRowElement>
+
+  onChangeOpenColumns?(colKey: number | string, level: number): void
 }
 
 interface BaseTableState {
@@ -208,7 +210,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
   }
 
   private renderTableHeader(info: RenderInfo) {
-    const { stickyTop, hasHeader } = this.props
+    const { stickyTop, hasHeader, onChangeOpenColumns } = this.props
 
     return (
       <div
@@ -218,7 +220,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
           display: hasHeader ? undefined : 'none',
         }}
       >
-        <TableHeader info={info} />
+        <TableHeader info={info} onChangeOpenColumns={onChangeOpenColumns} />
       </div>
     )
   }

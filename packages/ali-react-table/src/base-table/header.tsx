@@ -1,6 +1,7 @@
 import cx from 'classnames'
 import React, { CSSProperties } from 'react'
-import { ArtColumn } from '../interfaces'
+import { icons } from '../common-views'
+import { ArtColumn, ColWithRenderInfo } from '../interfaces'
 import { getTreeDepth, isLeafNode } from '../utils'
 import { HorizontalRenderRange, RenderInfo } from './interfaces'
 import { Classes } from './styles'
@@ -12,17 +13,6 @@ function range(n: number) {
   }
   return array
 }
-
-type ColWithRenderInfo =
-  | {
-      type: 'normal'
-      colIndex: number
-      col: ArtColumn
-      colSpan: number
-      isLeaf: boolean
-      width: number
-    }
-  | { type: 'blank'; blankSide: 'left' | 'right'; width: number }
 
 type IndexedCol = {
   colIndex: number
@@ -61,6 +51,7 @@ function filterNestedCenter(centerNested: ArtColumn[], hoz: HorizontalRenderRang
 
 /** 根据输入的 nested 列配置，算出相应的 leveled & flat 配置方便渲染 */
 function calculateLeveledAndFlat(inputNested: IndexedCol[], rowCount: number) {
+  console.log(inputNested)
   const leveled: ColWithRenderInfo[][] = []
   for (let depth = 0; depth < rowCount; depth++) {
     leveled.push([])
@@ -170,14 +161,42 @@ function calculateHeaderRenderInfo(
   return calculateLeveledAndFlat(attachColIndex(nested.full, 0), rowCount)
 }
 
-export default function TableHeader({ info }: { info: RenderInfo }) {
+export default function TableHeader({
+  info,
+  onChangeOpenColumns,
+}: {
+  info: RenderInfo
+  onChangeOpenColumns: (colKey: number | string, level: number) => void
+}) {
   const { nested, flat, stickyLeftMap, stickyRightMap } = info
   const rowCount = getTreeDepth(nested.full) + 1
   const headerRenderInfo = calculateHeaderRenderInfo(info, rowCount)
+  console.log(info)
 
   const fullFlatCount = flat.full.length
   const leftFlatCount = flat.left.length
   const rightFlatCount = flat.right.length
+
+  const renderexpandedIcon = ({ isLeaf, expanded }: { isLeaf?: boolean; expanded?: boolean }) => {
+    if (isLeaf === false) {
+      if (!expanded)
+        return (
+          <icons.CaretRight
+            className={cx('expansion-icon', 'collapsed')}
+            style={{
+              cursor: 'pointer',
+            }}
+          />
+        )
+      else return <icons.CaretDown style={{ color: '#A6A6A6' }} />
+    } else {
+      return null
+    }
+  }
+
+  const headerClick = (colKey: number | string, level: number) => {
+    onChangeOpenColumns(colKey, level)
+  }
 
   const thead = headerRenderInfo.leveled.map((wrappedCols, level) => {
     const headerCells = wrappedCols.map((wrapped) => {
@@ -212,7 +231,9 @@ export default function TableHeader({ info }: { info: RenderInfo }) {
               ...headerCellProps.style,
               ...positionStyle,
             }}
+            onClick={() => headerClick(col.colKey, headerRenderInfo.leveled.length - 1)}
           >
+            {renderexpandedIcon(col)}
             {col.title ?? col.name}
           </th>
         )
@@ -237,6 +258,7 @@ export default function TableHeader({ info }: { info: RenderInfo }) {
       </tr>
     )
   })
+  console.log(headerRenderInfo.leveled)
 
   return (
     <table>

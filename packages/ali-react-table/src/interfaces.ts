@@ -5,6 +5,9 @@ export type ArtColumnAlign = 'left' | 'center' | 'right'
 export type CellProps = React.TdHTMLAttributes<HTMLTableCellElement>
 
 export interface ArtColumnStaticPart {
+  /** 列的key值 */
+  colKey?: string | number
+
   /** 列的名称 */
   name: string
 
@@ -50,6 +53,8 @@ export interface ArtColumnDynamicPart {
 export interface ArtColumn extends ArtColumnStaticPart, ArtColumnDynamicPart {
   /** 该列的子节点 */
   children?: ArtColumn[]
+  isLeaf?: boolean
+  expanded?: boolean
 }
 
 /** SpanRect 用于描述合并单元格的边界
@@ -63,6 +68,8 @@ export interface SpanRect {
 
 export interface AbstractTreeNode {
   children?: AbstractTreeNode[]
+  // 增加叶子节点的判断
+  isLeaf?: boolean
 }
 
 export type SortOrder = 'desc' | 'asc' | 'none'
@@ -86,3 +93,14 @@ export interface IPlugin {
   pluginName: string
   pluginValue: any
 }
+
+export type ColWithRenderInfo =
+  | {
+      type: 'normal'
+      colIndex: number
+      col: ArtColumn
+      colSpan: number
+      isLeaf: boolean
+      width: number
+    }
+  | { type: 'blank'; blankSide: 'left' | 'right'; width: number }

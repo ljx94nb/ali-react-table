@@ -54,7 +54,7 @@ export interface TreeModeFeatureOptions {
 export function treeMode(opts: TreeModeFeatureOptions = {}) {
   return function treeModeStep(pipeline: TablePipeline) {
     // 存储tree的路径
-    let [pathArr, setPathArr] = useState<TreePath[]>([])
+    // let [pathArr, setPathArr] = useState<TreePath[]>([])
 
     const stateKey = 'treeMode'
     const ctx = pipeline.ctx
@@ -75,34 +75,34 @@ export function treeMode(opts: TreeModeFeatureOptions = {}) {
       opts.onChangeOpenKeys?.(nextKeys, key, action, pathArr)
       pipeline.setStateAtKey(stateKey, nextKeys, { key, action })
       // 将tree的路径存储为state
-      setPathArr(pathArr)
+      // setPathArr(pathArr)
     }
 
     const toggle = (rowKey: string, depth?: number) => {
-      if (pathArr.length === 0) {
-        pathArr.push({ depth, key: rowKey })
-      } else {
-        const depthArr = pathArr.map((i: TreePath) => i.depth)
-        if (depthArr.includes(depth)) {
-          pathArr = pathArr.filter((i: TreePath) => i.depth !== depth)
-          pathArr.push({ depth, key: rowKey })
-        } else {
-          pathArr.push({
-            depth,
-            key: rowKey,
-          })
-        }
-      }
+      // if (pathArr.length === 0) {
+      //   pathArr.push({ depth, key: rowKey })
+      // } else {
+      //   const depthArr = pathArr.map((i: TreePath) => i.depth)
+      //   if (depthArr.includes(depth)) {
+      //     pathArr = pathArr.filter((i: TreePath) => i.depth !== depth)
+      //     pathArr.push({ depth, key: rowKey })
+      //   } else {
+      //     pathArr.push({
+      //       depth,
+      //       key: rowKey,
+      //     })
+      //   }
+      // }
       const expanded = openKeySet.has(rowKey)
       if (expanded) {
         onChangeOpenKeys(
           openKeys.filter((key) => key !== rowKey),
           rowKey,
           'collapse',
-          pathArr,
+          // pathArr,
         )
       } else {
-        onChangeOpenKeys([...openKeys, rowKey], rowKey, 'expand', pathArr)
+        onChangeOpenKeys([...openKeys, rowKey], rowKey, 'expand')
       }
     }
     const isLeafNode = opts.isLeafNode ?? standardIsLeafNode

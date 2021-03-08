@@ -53,6 +53,16 @@ export interface IPaginationPluginValue {
   onChange?(currentPage: number): void
 }
 
+export interface TreePluginValue {
+  leftTreeConfig: any
+  topTreeConfig: any
+  openKeys?: string[]
+  onChangeOpenKeys?(nextKeys: string[]): void
+  onChangeOpenColumns?(colKey: string): void
+  getValue?(leftNode: any, topNode: any): void
+  isLeafNode?(node: any, nodeMeta: any): boolean
+}
+
 // pipeline的plugins对象结构
 export interface PipelinePlugin {
   paginationPlugin: IPaginationPluginValue

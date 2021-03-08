@@ -15,3 +15,4 @@ export const usePlugins = () => {
 }
 
 export * from './pagination-plugin'
+export * from './tree-plugin'

@@ -109,6 +109,8 @@ export default function buildCrossTreeTable(
             result.push({
               ...others,
               name: value,
+              colKey: key,
+              // expanded: false,
               children: dfs(children, { depth: ctx.depth + 1 }),
             })
           }
@@ -129,6 +131,8 @@ export default function buildCrossTreeTable(
         ...others,
         getValue: columnGetValue,
         name: value,
+        colKey: key,
+        // expanded: false,
         children: null,
         render(value: any, row: CrossTreeTableRenderRow) {
           if (options.render) {

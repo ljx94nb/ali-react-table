@@ -183,12 +183,10 @@ export default function TableHeader({
         return (
           <icons.CaretRight
             className={cx('expansion-icon', 'collapsed')}
-            style={{
-              cursor: 'pointer',
-            }}
+            style={{ position: 'relative', top: '3px' }}
           />
         )
-      else return <icons.CaretDown style={{ color: '#A6A6A6' }} />
+      else return <icons.CaretDown style={{ position: 'relative', top: '3px' }} />
     } else {
       return null
     }

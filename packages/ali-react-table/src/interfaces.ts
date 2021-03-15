@@ -6,7 +6,7 @@ export type CellProps = React.TdHTMLAttributes<HTMLTableCellElement>
 
 export interface ArtColumnStaticPart {
   /** 列的key值 */
-  colKey?: string | number
+  key?: string
 
   /** 列的名称 */
   name: string

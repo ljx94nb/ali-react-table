@@ -102,7 +102,7 @@ export interface BaseTableProps {
 
   getRowProps?(record: any, rowIndex: number): React.HTMLAttributes<HTMLTableRowElement>
 
-  onChangeOpenColumns?(colKey: number | string, level: number): void
+  onChangeOpenColumns?(key: string, expanded: boolean): void
 }
 
 interface BaseTableState {

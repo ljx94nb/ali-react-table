@@ -5,9 +5,16 @@
 // import { ratio, addChildren } from './utils'
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTreePlugin } from 'ali-react-table'
 import { CrossTreeTable } from 'ali-react-table/pivot'
+import { getIncomeData } from '../../website/src/assets/cdn-data'
+import { Pivot, PivotView } from '../../website/examples/others/drill-tree-table/models'
+import { action } from 'mobx'
+import { observer } from 'mobx-react'
+import { amount, lfl, ratio } from '../../website/src/assets/format'
+import _ from 'lodash'
+import { getValues } from './mock/tableCellConfig'
 
 function App() {
   // const columns: ArtColumn[] = [
@@ -97,125 +104,304 @@ function App() {
     {
       key: 'forenoon',
       value: '上午',
-      data: { parent: true },
-      isLeaf: false,
-      children: [
-        {
-          key: '9',
-          value: '9:00-10:00',
-          data: { x: 0 },
-          isLeaf: false,
-          children: [] as any[],
-        },
-        {
-          key: '10',
-          value: '10:00-11:00',
-          data: { x: 1 },
-          isLeaf: false,
-          children: [
-            { key: '25', value: '9:00-10:00', data: { x: 0 }, isLeaf: true },
-            { key: '26', value: '10:00-11:00', data: { x: 1 }, isLeaf: true },
-            { key: '27', value: '11:00-12:00', data: { x: 2 }, isLeaf: true },
-          ],
-        },
-        {
-          key: '11',
-          value: '11:00-12:00',
-          data: { x: 2 },
-          isLeaf: false,
-          children: [
-            { key: '28', value: '9:00-10:00', data: { x: 0 }, isLeaf: true },
-            { key: '29', value: '10:00-11:00', data: { x: 1 }, isLeaf: true },
-            { key: '30', value: '11:00-12:00', data: { x: 2 }, isLeaf: true },
-          ],
-        },
-      ],
-    },
-  ]
-
-  const topTreeConfig = [
-    { key: '2020-01', value: '2020-01', children: [] as any[], isLeaf: false, expanded: false },
-    { key: '2020-02', value: '2020-02', children: [] as any[], isLeaf: false, expanded: false },
-    { key: '2020-03', value: '2020-03', children: [] as any[], isLeaf: false, expanded: false },
-    { key: '2020-04', value: '2020-04', children: [] as any[], isLeaf: false, expanded: false },
-    { key: '2020-05', value: '2020-05', children: [] as any[], isLeaf: false, expanded: false },
-    { key: '2020-06', value: '2020-06', children: [] as any[], isLeaf: false, expanded: false },
-  ]
-
-  // 模拟请求树状列children的方法
-  const makeTopChildren = (keyPrefix: number | string) => [
-    {
-      key: `${keyPrefix}-week-0`,
-      value: '第一周',
-      data: { y: 0 },
       isLeaf: false,
       children: [] as any[],
     },
     {
-      key: `${keyPrefix}-week-1`,
-      value: '第二周',
-      data: { y: 1 },
+      key: 'afternoon',
+      value: '下午',
       isLeaf: false,
-      children: [],
+      children: [] as any[],
     },
     {
-      key: `${keyPrefix}-week-2`,
-      value: '第三周',
-      data: { y: 2 },
+      key: 'evening',
+      value: '晚上',
       isLeaf: false,
-      children: [],
-    },
-    {
-      key: `${keyPrefix}-week-3`,
-      value: '第四周',
-      data: { y: 3 },
-      isLeaf: false,
-      children: [],
+      children: [] as any[],
     },
   ]
 
-  const { treePlugin, setLeftTree, setOpenKeys, setTopTree, setIsLoading } = useTreePlugin({
+  const targetChildren = [
+    {
+      key: '目标收入',
+      value: '目标收入',
+      isLeaf: true,
+      children: [] as any[],
+    },
+    {
+      key: '实际收入',
+      value: '实际收入',
+      isLeaf: true,
+      children: [] as any[],
+    },
+    {
+      key: '目标达成率',
+      value: '目标达成率',
+      isLeaf: true,
+      children: [] as any[],
+    },
+    {
+      key: '收入月环比',
+      value: '收入月环比',
+      isLeaf: true,
+      children: [] as any[],
+    },
+  ]
+
+  const topTreeConfig = [
+    {
+      key: '上半年',
+      value: '上半年',
+      isLeaf: false,
+      children: targetChildren,
+    },
+    {
+      key: '下半年',
+      value: '下半年',
+      isLeaf: false,
+      children: targetChildren,
+    },
+  ]
+
+  // 模拟请求树状列children的方法
+  const makeTopChildren = (keyPrefix: string) => {
+    if (keyPrefix === '上半年') {
+      return [
+        {
+          key: '2020-01',
+          value: '2020-01',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-02',
+          value: '2020-02',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-03',
+          value: '2020-03',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-04',
+          value: '2020-04',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-05',
+          value: '2020-05',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-06',
+          value: '2020-06',
+          children: targetChildren,
+          isLeaf: false,
+        },
+      ]
+    } else if (
+      [
+        '2020-01',
+        '2020-02',
+        '2020-03',
+        '2020-04',
+        '2020-05',
+        '2020-06',
+        '2020-07',
+        '2020-08',
+        '2020-09',
+        '2020-10',
+        '2020-11',
+        '2020-12',
+      ].includes(keyPrefix)
+    ) {
+      return [
+        {
+          key: `${keyPrefix}-week-0`,
+          value: '第一周',
+          // data: '12%',
+          isLeaf: true,
+          children: targetChildren,
+        },
+        {
+          key: `${keyPrefix}-week-1`,
+          value: '第二周',
+          // data: '24%',
+          isLeaf: true,
+          children: targetChildren,
+        },
+        {
+          key: `${keyPrefix}-week-2`,
+          value: '第三周',
+          // data: '36%',
+          isLeaf: true,
+          children: targetChildren,
+        },
+        {
+          key: `${keyPrefix}-week-3`,
+          value: '第四周',
+          // data: '48%',
+          isLeaf: true,
+          children: targetChildren,
+        },
+      ]
+    } else if (keyPrefix === '下半年') {
+      return [
+        {
+          key: '2020-07',
+          value: '2020-07',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-08',
+          value: '2020-08',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-09',
+          value: '2020-09',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-10',
+          value: '2020-10',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-11',
+          value: '2020-11',
+          children: targetChildren,
+          isLeaf: false,
+        },
+        {
+          key: '2020-12',
+          value: '2020-12',
+          children: targetChildren,
+          isLeaf: false,
+        },
+      ]
+    }
+  }
+
+  const makeLeftChildren = (key: string) => [
+    { key: `${key}-9`, value: '9:00-10:00', isLeaf: true, children: [] as any[] },
+    { key: `${key}-10`, value: '10:00-11:00', isLeaf: true, children: [] },
+    { key: `${key}-11`, value: '11:00-12:00', isLeaf: true, children: [] },
+  ]
+
+  const expandKeys = {
+    rowKeys: [] as string[],
+    colKeys: [] as string[],
+  }
+
+  const { treePlugin } = useTreePlugin({
     leftTreeConfig,
     topTreeConfig,
-    onChangeOpenColumns,
-    onChangeOpenKeys,
+    makeTopChildren,
+    makeLeftChildren,
+    targetChildren,
+    expandKeys,
+    getValues,
   })
 
-  // row的下钻
-  function onChangeOpenKeys(nextKeys: string[]) {
-    setIsLoading(true)
-    setOpenKeys(nextKeys)
-    treePlugin.leftTree[0].children[0].children = [
-      { key: '22', value: '9:00-10:00', data: { x: 0 }, isLeaf: true },
-      { key: '23', value: '10:00-11:00', data: { x: 1 }, isLeaf: true },
-      { key: '24', value: '11:00-12:00', data: { x: 2 }, isLeaf: true },
-    ]
-    setLeftTree(treePlugin.leftTree)
-    setIsLoading(false)
-  }
+  // const ALL_DIMS = [
+  //   { code: 'planet', name: '子公司' },
+  //   { code: 'season', name: '季度' },
+  //   { code: 'month', name: '月份' },
+  //   { code: 'area', name: '门店' },
+  //   { code: 'one', name: '一级类目' },
+  //   { code: 'two', name: '二级类目' },
+  //   { code: 'three', name: '三级类目' },
+  // ]
 
-  // column的下钻
-  function onChangeOpenColumns(colKey: string) {
-    function dfs(topTree: any) {
-      topTree.forEach((i: any) => {
-        if (i.key === colKey) {
-          if (i.expanded) {
-            i.children.length = 0
-          } else {
-            const children = makeTopChildren(colKey)
-            i.children = children
-          }
-          i.expanded = !i.expanded
-        } else {
-          dfs(i.children)
-        }
-      })
-    }
-    setIsLoading(true)
-    dfs(treePlugin.topTree)
-    setTopTree([...treePlugin.topTree])
-    setIsLoading(false)
-  }
+  // const INDICATORS = [
+  //   {
+  //     code: 'a',
+  //     name: '目标收入',
+  //     align: 'right' as const,
+  //     render: amount,
+  //     features: { sortable: true },
+  //     expression: 'SUM(a)',
+  //   },
+  //   {
+  //     code: 'b',
+  //     name: '实际收入',
+  //     render: amount,
+  //     align: 'right' as const,
+  //     features: { sortable: true },
+  //     expression: 'SUM(b)',
+  //   },
+  //   {
+  //     code: 'c',
+  //     name: '上月收入',
+  //     render: amount,
+  //     hidden: true,
+  //     align: 'right' as const,
+  //     features: { sortable: true },
+  //     expression: 'SUM(c)',
+  //   },
+  //   {
+  //     code: 'lfl',
+  //     name: '收入月环比',
+  //     render: lfl,
+  //     align: 'right' as const,
+  //     features: { sortable: true },
+  //     expression: '(a - c) / a',
+  //   },
+  //   {
+  //     code: 'd',
+  //     name: '重点商品收入',
+  //     render: amount,
+  //     align: 'right' as const,
+  //     features: { sortable: true },
+  //     expression: 'SUM(d)',
+  //   },
+  //   {
+  //     code: 'rate',
+  //     name: '重点商品收入占比',
+  //     render: ratio,
+  //     align: 'right' as const,
+  //     features: { sortable: true },
+  //     expression: 'd / b',
+  //   },
+  // ]
+
+  // const [pivot] = useState(() => {
+  //   return new Pivot({
+  //     allDimensions: ALL_DIMS,
+  //     allIndicators: INDICATORS,
+  //     dimCodes: ['planet', 'area', 'season'],
+  //   })
+  // })
+
+  // const [pivotView] = useState(() => new PivotView(pivot))
+  // console.log(pivot)
+
+  // useEffect(() => {
+  //   getIncomeData().then(
+  //     action((data: any[]) => {
+  //       pivot.data = data
+  //       pivot.isLoading = false
+  //       pivot.filters = Object.fromEntries(
+  //         pivot.allDimensions.map((dim) => {
+  //           return [dim.code, _.uniq(data.map((d) => d[dim.code]))]
+  //         }),
+  //       )
+  //     }),
+  //   )
+  // }, [])
+
+  // const { recordMap, leftTree, topTree } = pivotView
+  // console.log(leftTree, topTree)
 
   return (
     <div>
@@ -235,6 +421,30 @@ function App() {
         {...treePlugin}
       />
     </div>
+    // <div>
+    //   <CrossTreeTable
+    //     style={{ marginTop: 8 }}
+    //     primaryColumn={{
+    //       lock: true,
+    //       name: '数据维度',
+    //       width: 180,
+    //     }}
+    //     defaultColumnWidth={120}
+    //     isLoading={pivot.isLoading}
+    //     leftTree={leftTree}
+    //     topTree={topTree}
+    //     getValue={(leftNode, topNode) => {
+    //       const record = recordMap.get(leftNode.key)
+    //       const ind = topNode.data.indicator
+    //       console.log(record, ind)
+    //       return record?.[ind.code]
+    //     }}
+    //     render={(value, leftNode, topNode) => {
+    //       const ind = topNode.data.indicator
+    //       return ind.render ? ind.render(value) : value
+    //     }}
+    //   />
+    // </div>
   )
 }
 

@@ -1,36 +1,309 @@
 import { TreePluginValue } from '../base-table/interfaces'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import _ from 'lodash'
+// import { ArtColumn } from '../interfaces'
+
+interface ColExpandedListType {
+  path: string[]
+  value: string
+}
 
 export function useTreePlugin({
   leftTreeConfig,
   topTreeConfig,
-  onChangeOpenColumns,
-  onChangeOpenKeys,
+  makeTopChildren,
+  makeLeftChildren,
+  targetChildren,
+  expandKeys,
+  getValues,
 }: TreePluginValue) {
-  const getValue = (leftNode: any, topNode: any) => {
-    // console.log(leftNode, topNode)
-    return topNode.value + ' ' + leftNode.value
-    // if (leftNode.data.parent) {
-    //   const map: any = {
-    //     forenoon: '万事开头难',
-    //     afternoon: '然后中间难',
-    //     evening: '最后结束难',
-    //   }
-    //   return map[leftNode.key]
-    // }
-    // const courses = ['数学', '英语', '计算机基础', '数据结构', '线性代数', '微积分', '概率论']
-    // // const i = (leftNode.data.x + topNode.data.y) % courses.length
-    // return courses[1]
-  }
-  // 受控用法：
+  const [targets, setTargets] = useState(targetChildren.map((i: any) => i.key))
+  const [values, setValues] = useState({})
   const [leftTree, setLeftTree] = useState(leftTreeConfig)
   const [topTree, setTopTree] = useState(topTreeConfig)
-  const [openKeys, setOpenKeys] = useState([leftTree[0].key])
+  const [openKeys, setOpenKeys] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [lastRequestKeys, setLastRequestKeys] = useState(['root'])
+  let [rowLastRequestKeys, setRowLastRequestKeys] = useState(['root'])
+  // 列展开的项
+  let [colExpandedList, setColExpandedList] = useState<ColExpandedListType[]>([])
+  // 行展开的项
+  let [rowExpandedList, setRowExpandedList] = useState<ColExpandedListType[]>([])
+  // 是否点击了行展开
+  const [isOpenRow, setIsOpenRow] = useState(false)
+  // 是否点击了列展开
+  const [isOpenCol, setIsOpenCol] = useState(false)
+  // 判断找路径时是否找到目标key，找到了就不要再递归了
+  const findFlag = useRef(false)
+
+  /**
+   * 找树中指定key的路径
+   * @param item  待遍历数组结构
+   * @param key  待查找目标节点的key
+   */
+  function getPath(item: any, key: string, path: string[]): void {
+    path.push(item.key)
+    if (item.key === key) {
+      //找到节点后设置标识
+      findFlag.current = true
+      return
+    }
+    if (item.children && item.children.length > 0) {
+      for (let i = 0; i < item.children.length; i++) {
+        getPath(item.children[i], key, path)
+        if (findFlag.current) {
+          //如果有标识则不进行多余操作，直接返回
+          return
+        }
+      }
+      //子节点遍历后没有找到便弹出其父节点
+      path.pop()
+    } else if (!item.children || item.children.length === 0) {
+      //遍历到最下层后弹出子节点
+      path.pop()
+    }
+  }
+
+  function findRequestPath(tree: any[], key: string) {
+    const tempPath: any[] = []
+    tree.forEach((item: any) => {
+      getPath(item, key, tempPath)
+    })
+    return tempPath
+  }
+
+  // 懒加载数据，根据展开的行配置和列配置
+  useEffect(() => {
+    function selectLastRequestKeys(
+      lastRequestKeys: string[],
+      leftPath: string[],
+      rowIndex: number,
+      totalLength: number,
+    ) {
+      lastRequestKeys.forEach((key: string, colIndex: number) => {
+        const topPath = findRequestPath([{ key: 'root', children: topTree }], key)
+        topPath.splice(topPath.indexOf('root'), 1)
+        findFlag.current = false
+        const requestPath = leftPath.concat(topPath)
+        // console.log(requestPath)
+        // todo: ⚠️这里要做values的拼接!!! 利用Promise.all请求所有数据之后渲染
+        if (requestPath.length) {
+          setIsLoading(true)
+          const valuesClone = JSON.parse(JSON.stringify(values))
+          _.set(valuesClone, requestPath, getValues(requestPath, targets))
+          const combineValues = Object.assign(values, valuesClone)
+          // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
+          if (rowIndex === totalLength - 1 && colIndex === lastRequestKeys.length - 1) {
+            console.log(combineValues)
+            // 确保combineValues为最新的
+            setTimeout(() => {
+              setValues(JSON.parse(JSON.stringify(combineValues)))
+              setIsLoading(false)
+            }, 0)
+          }
+        }
+      })
+    }
+
+    function selectRowLastRequestKeys(rowLastRequestKeys: string[]) {
+      rowLastRequestKeys.forEach((rowKey: string, rowIndex: number) => {
+        const leftPath = findRequestPath(leftTree, rowKey)
+        findFlag.current = false
+        if (isOpenRow) {
+          selectLastRequestKeys(
+            colExpandedList.map((i: ColExpandedListType) => i.value),
+            leftPath,
+            rowIndex,
+            rowLastRequestKeys.length,
+          )
+        } else {
+          selectLastRequestKeys(lastRequestKeys, leftPath, rowIndex, rowLastRequestKeys.length)
+        }
+      })
+    }
+
+    if (isOpenCol) {
+      selectRowLastRequestKeys(rowExpandedList.map((i: ColExpandedListType) => i.value))
+    } else {
+      selectRowLastRequestKeys(rowLastRequestKeys)
+    }
+  }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, isOpenRow])
+
+  // 初始化列的展开配置
+  useEffect(() => {
+    const len = expandKeys.colKeys.length
+
+    const topTreeClone = JSON.parse(JSON.stringify(topTree))
+    lastRequestKeys.length = 0
+    topTreeClone.forEach((item: any) => {
+      item.path = [item.key]
+      item.expanded = false
+      item.children.forEach((child: any) => {
+        if (!child.path || !child.path.length) child.path = [...item.path, child.key]
+      })
+      lastRequestKeys.push(item.key)
+    })
+
+    if (len > 0) {
+      expandKeys.colKeys.forEach((key: string) => {
+        onChangeOpenColumns(key, false, topTreeClone)
+      })
+    } else {
+      setTopTree([...topTreeClone])
+      setLastRequestKeys([...lastRequestKeys])
+      setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+    }
+  }, [])
+
+  // 初始化行的展开配置
+  useEffect(() => {
+    const len = expandKeys.rowKeys.length
+
+    rowLastRequestKeys.length = 0
+    leftTree.forEach((item: any) => {
+      if (!item.path || !item.path.length) item.path = [item.key]
+      rowLastRequestKeys.push(item.key)
+    })
+
+    if (len > 0) {
+      onChangeOpenKeys(expandKeys.rowKeys, expandKeys.rowKeys[len - 1], 'expand')
+    } else {
+      setLeftTree([...leftTree])
+      setRowLastRequestKeys([...rowLastRequestKeys])
+      setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+    }
+  }, [])
 
   // 添加判断叶子节点的依据用来渲染下钻符号
   function isLeafNode(node: any, nodeMeta: any) {
     return node.isLeaf === true
+  }
+
+  // 根据矩阵获取表格cell数据
+  const getValue = (
+    leftNode: any,
+    topNode: any,
+    leftDepth: number,
+    topDepth: number,
+    rowIndex: number,
+    colIndex: number,
+  ) => {
+    // console.log(leftNode, topNode)
+    if (!leftNode.path || !topNode.path) return ''
+    const leftPath = leftNode.path
+    const topPath = topNode.path
+    // console.log(leftPath.concat(topPath))
+    return _.get(values, leftPath.concat(topPath), '')
+  }
+
+  // column的下钻
+  function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = topTree) {
+    lastRequestKeys.length = 0
+    let parentPath: string[] = ['root']
+    let openKey: string
+
+    function dfs(topTree: any) {
+      topTree.forEach((i: any) => {
+        if (i.key === key) {
+          if (i.expanded) {
+            const childrenLen = i.children.length
+            i.children = [...targetChildren]
+            i.children.forEach((child: any) => {
+              if (!child.path || !child.path.length) child.path = [...i.path, child.key]
+            })
+            colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
+              const pathLen = item.path.length - 1
+              if (item.path[pathLen] === i.key) parentPath = item.path.slice(0, pathLen)
+              return !item.path.includes(i.key)
+            })
+            // parentPath = colExpandedList[0].key
+            lastRequestKeys.push(i.key)
+          } else {
+            colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
+              if (item.value === i.key) parentPath = item.path
+              else openKey = i.key
+              return item.value !== i.key
+            })
+            children = makeTopChildren(key)
+            i.children = JSON.parse(JSON.stringify(children))
+            i.children.forEach((child: any) => {
+              child.expanded = false
+              const childKey = child.key
+              if (!child.path || !child.path.length) child.path = [...i.path, childKey]
+              lastRequestKeys.push(childKey)
+              child.children.forEach((item: any) => {
+                if (!item.path || !item.path.length) item.path = [...child.path, item.key]
+              })
+            })
+          }
+          i.expanded = !i.expanded
+        } else {
+          dfs(i.children)
+        }
+      })
+    }
+    let children: any[] = []
+    dfs(topTreeClone)
+    const colExpandedListBoth = [
+      ...colExpandedList,
+      ...lastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),
+    ]
+    setTopTree([...topTreeClone])
+    setIsOpenRow(false)
+    setIsOpenCol(true)
+    // console.log(colExpandedListBoth)
+    setColExpandedList(colExpandedListBoth)
+    setLastRequestKeys([...lastRequestKeys])
+  }
+
+  // row的下钻
+  function onChangeOpenKeys(nextKeys: string[], key: string, action: string) {
+    function dfs(leftTree: any) {
+      leftTree.forEach((i: any) => {
+        if (i.key === key) {
+          if (action === 'expand') {
+            children = makeLeftChildren(key)
+            i.children = JSON.parse(JSON.stringify(children))
+            i.children.forEach((child: any) => {
+              const childKey = child.key
+              if (!child.path || !child.path.length) child.path = [...i.path, childKey]
+              rowLastRequestKeys.push(child.key)
+            })
+            rowExpandedList.forEach((item: ColExpandedListType) => {
+              if (item.value === i.key) parentPath = item.path
+              else openKey = i.key
+            })
+          } else {
+            i.children.length = 0
+            // todo: ⚠️行收起时行的请求的路径终点keys也要改变
+            rowExpandedList = rowExpandedList.filter((item: ColExpandedListType) => {
+              const pathLen = item.path.length - 1
+              if (item.path[pathLen] === i.key) parentPath = item.path.slice(0, pathLen)
+              return !item.path.includes(i.key)
+            })
+            // rowLastRequestKeys = [i.key]
+          }
+        } else {
+          dfs(i.children)
+        }
+      })
+    }
+    let children: any[] = []
+    let parentPath: string[] = ['root']
+    let openKey: string
+    rowLastRequestKeys.length = 0
+    setOpenKeys(nextKeys)
+    dfs(leftTree)
+    const rowExpandedListBoth = [
+      ...rowExpandedList,
+      ...rowLastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),
+    ]
+    setLeftTree([...leftTree])
+    setIsOpenRow(true)
+    setIsOpenCol(false)
+    // console.log(rowExpandedListBoth)
+    setRowExpandedList(rowExpandedListBoth)
+    setRowLastRequestKeys([...rowLastRequestKeys])
   }
 
   return {
@@ -44,10 +317,6 @@ export function useTreePlugin({
       isLeafNode,
       isLoading,
     },
-    setLeftTree,
-    setTopTree,
-    setOpenKeys,
-    setIsLoading,
   }
 
   // 树状——>扁平

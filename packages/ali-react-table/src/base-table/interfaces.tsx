@@ -56,11 +56,14 @@ export interface IPaginationPluginValue {
 export interface TreePluginValue {
   leftTreeConfig: any
   topTreeConfig: any
+  getValues<T>(requestPath: string[], targets: string[]): T
   openKeys?: string[]
-  onChangeOpenKeys?(nextKeys: string[]): void
-  onChangeOpenColumns?(colKey: string): void
+  targetChildren?: any[]
+  makeTopChildren?(key: string): any[]
+  makeLeftChildren?(key: string): any[]
   getValue?(leftNode: any, topNode: any): void
   isLeafNode?(node: any, nodeMeta: any): boolean
+  expandKeys?: { rowKeys: string[]; colKeys: string[] }
 }
 
 // pipeline的plugins对象结构

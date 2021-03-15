@@ -51,7 +51,7 @@ function filterNestedCenter(centerNested: ArtColumn[], hoz: HorizontalRenderRang
 
 /** 根据输入的 nested 列配置，算出相应的 leveled & flat 配置方便渲染 */
 function calculateLeveledAndFlat(inputNested: IndexedCol[], rowCount: number) {
-  console.log(inputNested)
+  // console.log(inputNested)
   const leveled: ColWithRenderInfo[][] = []
   for (let depth = 0; depth < rowCount; depth++) {
     leveled.push([])
@@ -166,12 +166,12 @@ export default function TableHeader({
   onChangeOpenColumns,
 }: {
   info: RenderInfo
-  onChangeOpenColumns: (colKey: number | string, level: number) => void
+  onChangeOpenColumns: (key: string, expanded: boolean) => void
 }) {
   const { nested, flat, stickyLeftMap, stickyRightMap } = info
   const rowCount = getTreeDepth(nested.full) + 1
   const headerRenderInfo = calculateHeaderRenderInfo(info, rowCount)
-  console.log(info)
+  // console.log(info)
 
   const fullFlatCount = flat.full.length
   const leftFlatCount = flat.left.length
@@ -192,8 +192,9 @@ export default function TableHeader({
     }
   }
 
-  const headerClick = (colKey: number | string, level: number) => {
-    onChangeOpenColumns(colKey, level)
+  const headerClick = (col: ArtColumn) => {
+    if (col.isLeaf) return
+    onChangeOpenColumns(col.key, col.expanded)
   }
 
   const thead = headerRenderInfo.leveled.map((wrappedCols, level) => {
@@ -229,7 +230,7 @@ export default function TableHeader({
               ...headerCellProps.style,
               ...positionStyle,
             }}
-            onClick={() => headerClick(col.colKey, headerRenderInfo.leveled.length - 1)}
+            onClick={() => headerClick(col)}
           >
             {renderexpandedIcon(col)}
             {col.title ?? col.name}
@@ -256,7 +257,7 @@ export default function TableHeader({
       </tr>
     )
   })
-  console.log(headerRenderInfo.leveled)
+  // console.log(headerRenderInfo.leveled)
 
   return (
     <table>

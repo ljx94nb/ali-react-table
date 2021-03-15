@@ -1,7 +1,7 @@
 import React from 'react'
 import { noop } from 'rxjs'
 import { BaseTable, BaseTableProps } from '../../base-table'
-import { CellProps, ColWithRenderInfo } from '../../interfaces'
+import { CellProps, ColWithRenderInfo, ArtColumn } from '../../interfaces'
 import { CrossTableLeftMetaColumn, LeftCrossTreeNode, ROW_KEY, TopCrossTreeNode } from '../cross-table'
 import buildCrossTreeTable from './buildCrossTreeTable'
 
@@ -14,12 +14,19 @@ export interface CrossTreeTableProps extends Omit<BaseTableProps, 'dataSource' |
 
   defaultOpenKeys?: string[]
   openKeys?: string[]
-  onChangeOpenKeys?(nextOpenKeys: string[]): void
-  onChangeOpenColumns?(colKey: number | string, level: number): void
+  onChangeOpenKeys?(nextOpenKeys: string[], key: string, action: string): void
+  onChangeOpenColumns?(key: string, expanded: boolean): void
   indentSize?: number
   isLeafNode?(node: any, nodeMeta: { depth: number; expanded: boolean; rowKey: string }): boolean
 
-  getValue(leftNode: LeftCrossTreeNode, topNode: TopCrossTreeNode, leftDepth: number, topDepth: number): any
+  getValue(
+    leftNode: LeftCrossTreeNode,
+    topNode: TopCrossTreeNode,
+    leftDepth: number,
+    topDepth: number,
+    rowIndex: number,
+    collndex: number,
+  ): any
   render?(
     value: any,
     leftNode: LeftCrossTreeNode,
@@ -56,8 +63,8 @@ export default class CrossTreeTable extends React.Component<CrossTreeTableProps,
     }
   }
 
-  onChangeOpenKeys = (nextOpenKeys: string[]) => {
-    this.props.onChangeOpenKeys(nextOpenKeys)
+  onChangeOpenKeys = (nextOpenKeys: string[], key: string, action: string) => {
+    this.props.onChangeOpenKeys(nextOpenKeys, key, action)
     if (!('openKeys' in this.props)) {
       this.setState({ openKeys: nextOpenKeys })
     }

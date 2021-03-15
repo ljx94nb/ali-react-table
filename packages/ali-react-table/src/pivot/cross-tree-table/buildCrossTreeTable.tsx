@@ -25,7 +25,7 @@ export type BuildCrossTreeTableOptions = Omit<
 > & {
   primaryColumn: CrossTableLeftMetaColumn
   openKeys: string[]
-  onChangeOpenKeys(nextOpenKeys: string[]): void
+  onChangeOpenKeys(nextOpenKeys: string[], key: string, action: string): void
   indentSize?: number
   isLeafNode?(node: any, nodeMeta: { depth: number; expanded: boolean; rowKey: string }): boolean
 }
@@ -101,15 +101,15 @@ export default function buildCrossTreeTable(
       function dfs(nodes: TopCrossTreeNode[], ctx: { depth: number }): ArtColumn[] {
         const result: ArtColumn[] = []
 
-        for (const node of nodes) {
-          if (standardIsLeafNode(node)) {
-            result.push(getDataColumn(node, ctx.depth))
+        for (let i = 0, len = nodes.length; i < len; i++) {
+          if (standardIsLeafNode(nodes[i])) {
+            result.push(getDataColumn(nodes[i], ctx.depth, i))
           } else {
-            const { key, value, children, ...others } = node
+            const { key, value, children, ...others } = nodes[i]
             result.push({
               ...others,
               name: value,
-              colKey: key,
+              key,
               // expanded: false,
               children: dfs(children, { depth: ctx.depth + 1 }),
             })
@@ -120,18 +120,18 @@ export default function buildCrossTreeTable(
       }
     }
 
-    function getDataColumn(topNode: TopCrossTreeNode, topDepth: number): ArtColumn {
-      const columnGetValue = (row: CrossTreeTableRenderRow) => {
+    function getDataColumn(topNode: TopCrossTreeNode, topDepth: number, colIndex: number): ArtColumn {
+      const columnGetValue = (row: CrossTreeTableRenderRow, rowIndex: number) => {
         const leftDepth = row.nodes.length - 1
         const leftNode = row.node
-        return options.getValue(leftNode, topNode, leftDepth, topDepth)
+        return options.getValue(leftNode, topNode, leftDepth, topDepth, rowIndex, colIndex)
       }
       const { key, value, children, ...others } = topNode
       return {
         ...others,
         getValue: columnGetValue,
         name: value,
-        colKey: key,
+        key,
         // expanded: false,
         children: null,
         render(value: any, row: CrossTreeTableRenderRow) {

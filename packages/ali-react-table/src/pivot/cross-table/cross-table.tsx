@@ -15,7 +15,14 @@ export interface CrossTableProps extends Omit<BaseTableProps, 'dataSource' | 'co
   topTotalNode?: TopCrossTreeNode
   leftMetaColumns?: CrossTableLeftMetaColumn[]
 
-  getValue(leftNode: LeftCrossTreeNode, topNode: TopCrossTreeNode, leftDepth: number, topDepth: number): any
+  getValue(
+    leftNode: LeftCrossTreeNode,
+    topNode: TopCrossTreeNode,
+    leftDepth: number,
+    topDepth: number,
+    rowIndex: number,
+    colIndex: number,
+  ): any
   render?(
     value: any,
     leftNode: LeftCrossTreeNode,

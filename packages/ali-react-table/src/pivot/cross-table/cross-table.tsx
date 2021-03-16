@@ -20,8 +20,8 @@ export interface CrossTableProps extends Omit<BaseTableProps, 'dataSource' | 'co
     topNode: TopCrossTreeNode,
     leftDepth: number,
     topDepth: number,
-    rowIndex: number,
-    colIndex: number,
+    rowIndex?: number,
+    colIndex?: number,
   ): any
   render?(
     value: any,

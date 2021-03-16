@@ -6,8 +6,8 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { useTreePlugin } from 'ali-react-table'
-import { CrossTreeTable } from 'ali-react-table/pivot'
+import { useTreePlugin } from 'ycljx-ali-react-table'
+import { CrossTreeTable } from 'ycljx-ali-react-table/pivot'
 import { getIncomeData } from '../../website/src/assets/cdn-data'
 import { Pivot, PivotView } from '../../website/examples/others/drill-tree-table/models'
 import { action } from 'mobx'

@@ -1,6 +1,6 @@
 {
   "name": "ycljx-ali-react-table",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "改造的ali-react-table (create by yuanchen.ljx)",
   "sideEffects": false,
   "module": "dist/ali-react-table.esm.js",

@@ -114,7 +114,8 @@ export function useTreePlugin({
    */
   function selectRowLastRequestKeys(rowLastRequestKeys: string[]) {
     rowLastRequestKeys.forEach((rowKey: string, rowIndex: number) => {
-      const leftPath = findRequestPath(leftTree, rowKey)
+      const leftPath = findRequestPath([{ key: 'root', children: leftTree }], rowKey)
+      leftPath.splice(leftPath.indexOf('root'), 1)
       findFlag.current = false
       if (isOpenRow) {
         selectLastRequestKeys(
@@ -136,7 +137,7 @@ export function useTreePlugin({
     } else {
       selectRowLastRequestKeys(rowLastRequestKeys)
     }
-  }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, isOpenRow])
+  }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, rowExpandedList, isOpenRow, isOpenCol])
 
   // 初始化列的展开配置
   useEffect(() => {
@@ -219,8 +220,8 @@ export function useTreePlugin({
       topTree.forEach((i: any) => {
         if (i.key === key) {
           if (i.expanded) {
-            const childrenLen = i.children.length
-            i.children = [...targetChildren]
+            // const childrenLen = i.children.length
+            i.children = JSON.parse(JSON.stringify(targetChildren))
             i.children.forEach((child: any) => {
               child.path = [...i.path, child.key]
             })
@@ -264,7 +265,7 @@ export function useTreePlugin({
     setTopTree([...topTreeClone])
     setIsOpenRow(false)
     setIsOpenCol(true)
-    // console.log(colExpandedListBoth)
+    // console.log(topTreeClone)
     setColExpandedList(colExpandedListBoth)
     setLastRequestKeys([...lastRequestKeys])
   }

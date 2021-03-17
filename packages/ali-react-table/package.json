@@ -1,7 +1,7 @@
 {
-  "name": "ali-react-table",
-  "version": "2.4.0",
-  "description": "高性能 React 表格组件",
+  "name": "ycljx-ali-react-table",
+  "version": "0.0.3",
+  "description": "改造的ali-react-table (create by yuanchen.ljx)",
   "sideEffects": false,
   "module": "dist/ali-react-table.esm.js",
   "main": "dist/ali-react-table.js",
@@ -13,8 +13,8 @@
   },
   "homepage": "https://github.com/alibaba/ali-react-table",
   "author": {
-    "name": "Shi Feichao",
-    "email": "842351815@qq.com"
+    "name": "yuanchen",
+    "email": "1771224520@qq.com"
   },
   "scripts": {
     "watch": "rollup --config rollup.config.js --watch",

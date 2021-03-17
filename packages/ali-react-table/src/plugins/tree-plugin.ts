@@ -23,7 +23,9 @@ export function useTreePlugin({
   const [topTree, setTopTree] = useState(topTreeConfig)
   const [openKeys, setOpenKeys] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  // 列最后的key
   const [lastRequestKeys, setLastRequestKeys] = useState(['root'])
+  // 行最后的key
   let [rowLastRequestKeys, setRowLastRequestKeys] = useState(['root'])
   // 列展开的项
   let [colExpandedList, setColExpandedList] = useState<ColExpandedListType[]>([])
@@ -72,56 +74,63 @@ export function useTreePlugin({
     return tempPath
   }
 
+  /**
+   * 处理列最后的key找到列的路径
+   */
+  function selectLastRequestKeys(lastRequestKeys: string[], leftPath: string[], rowIndex: number, totalLength: number) {
+    lastRequestKeys.forEach((key: string, colIndex: number) => {
+      const topPath = findRequestPath([{ key: 'root', children: topTree }], key)
+      topPath.splice(topPath.indexOf('root'), 1)
+      findFlag.current = false
+      const requestPath = leftPath.concat(topPath)
+      // console.log(requestPath)
+      // todo: ⚠️这里要做values的拼接!!! 利用Promise.all请求所有数据之后渲染
+      if (requestPath.length) {
+        setIsLoading(true)
+        const valuesClone = JSON.parse(JSON.stringify(values))
+        // 如果有key对应那么就不需要再请求
+        if (_.has(valuesClone, requestPath)) {
+          setIsLoading(false)
+          return
+        }
+        _.set(valuesClone, requestPath, getValues(requestPath, targets))
+        const combineValues = Object.assign(values, valuesClone)
+        // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
+        // 只在最后一个对象合并后再重渲染
+        if (rowIndex === totalLength - 1 && colIndex === lastRequestKeys.length - 1) {
+          console.log(combineValues)
+          // 确保combineValues为最新的
+          setTimeout(() => {
+            setValues(JSON.parse(JSON.stringify(combineValues)))
+            setIsLoading(false)
+          }, 0)
+        }
+      }
+    })
+  }
+
+  /**
+   * 处理行最后的路径，找到行的路径
+   */
+  function selectRowLastRequestKeys(rowLastRequestKeys: string[]) {
+    rowLastRequestKeys.forEach((rowKey: string, rowIndex: number) => {
+      const leftPath = findRequestPath(leftTree, rowKey)
+      findFlag.current = false
+      if (isOpenRow) {
+        selectLastRequestKeys(
+          colExpandedList.map((i: ColExpandedListType) => i.value),
+          leftPath,
+          rowIndex,
+          rowLastRequestKeys.length,
+        )
+      } else {
+        selectLastRequestKeys(lastRequestKeys, leftPath, rowIndex, rowLastRequestKeys.length)
+      }
+    })
+  }
+
   // 懒加载数据，根据展开的行配置和列配置
   useEffect(() => {
-    function selectLastRequestKeys(
-      lastRequestKeys: string[],
-      leftPath: string[],
-      rowIndex: number,
-      totalLength: number,
-    ) {
-      lastRequestKeys.forEach((key: string, colIndex: number) => {
-        const topPath = findRequestPath([{ key: 'root', children: topTree }], key)
-        topPath.splice(topPath.indexOf('root'), 1)
-        findFlag.current = false
-        const requestPath = leftPath.concat(topPath)
-        // console.log(requestPath)
-        // todo: ⚠️这里要做values的拼接!!! 利用Promise.all请求所有数据之后渲染
-        if (requestPath.length) {
-          setIsLoading(true)
-          const valuesClone = JSON.parse(JSON.stringify(values))
-          _.set(valuesClone, requestPath, getValues(requestPath, targets))
-          const combineValues = Object.assign(values, valuesClone)
-          // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
-          if (rowIndex === totalLength - 1 && colIndex === lastRequestKeys.length - 1) {
-            console.log(combineValues)
-            // 确保combineValues为最新的
-            setTimeout(() => {
-              setValues(JSON.parse(JSON.stringify(combineValues)))
-              setIsLoading(false)
-            }, 0)
-          }
-        }
-      })
-    }
-
-    function selectRowLastRequestKeys(rowLastRequestKeys: string[]) {
-      rowLastRequestKeys.forEach((rowKey: string, rowIndex: number) => {
-        const leftPath = findRequestPath(leftTree, rowKey)
-        findFlag.current = false
-        if (isOpenRow) {
-          selectLastRequestKeys(
-            colExpandedList.map((i: ColExpandedListType) => i.value),
-            leftPath,
-            rowIndex,
-            rowLastRequestKeys.length,
-          )
-        } else {
-          selectLastRequestKeys(lastRequestKeys, leftPath, rowIndex, rowLastRequestKeys.length)
-        }
-      })
-    }
-
     if (isOpenCol) {
       selectRowLastRequestKeys(rowExpandedList.map((i: ColExpandedListType) => i.value))
     } else {
@@ -139,19 +148,21 @@ export function useTreePlugin({
       item.path = [item.key]
       item.expanded = false
       item.children.forEach((child: any) => {
-        if (!child.path || !child.path.length) child.path = [...item.path, child.key]
+        child.path = [...item.path, child.key]
       })
       lastRequestKeys.push(item.key)
     })
 
+    setTopTree([...topTreeClone])
+    setLastRequestKeys([...lastRequestKeys])
+    setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+
     if (len > 0) {
       expandKeys.colKeys.forEach((key: string) => {
-        onChangeOpenColumns(key, false, topTreeClone)
+        setTimeout(() => {
+          onChangeOpenColumns(key, false, topTreeClone)
+        }, 0)
       })
-    } else {
-      setTopTree([...topTreeClone])
-      setLastRequestKeys([...lastRequestKeys])
-      setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
     }
   }, [])
 
@@ -161,16 +172,18 @@ export function useTreePlugin({
 
     rowLastRequestKeys.length = 0
     leftTree.forEach((item: any) => {
-      if (!item.path || !item.path.length) item.path = [item.key]
+      item.path = [item.key]
       rowLastRequestKeys.push(item.key)
     })
 
+    setLeftTree([...leftTree])
+    setRowLastRequestKeys([...rowLastRequestKeys])
+    setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+
     if (len > 0) {
-      onChangeOpenKeys(expandKeys.rowKeys, expandKeys.rowKeys[len - 1], 'expand')
-    } else {
-      setLeftTree([...leftTree])
-      setRowLastRequestKeys([...rowLastRequestKeys])
-      setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+      setTimeout(() => {
+        onChangeOpenKeys(expandKeys.rowKeys, expandKeys.rowKeys[len - 1], 'expand')
+      }, 0)
     }
   }, [])
 
@@ -209,7 +222,7 @@ export function useTreePlugin({
             const childrenLen = i.children.length
             i.children = [...targetChildren]
             i.children.forEach((child: any) => {
-              if (!child.path || !child.path.length) child.path = [...i.path, child.key]
+              child.path = [...i.path, child.key]
             })
             colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
               const pathLen = item.path.length - 1
@@ -229,10 +242,10 @@ export function useTreePlugin({
             i.children.forEach((child: any) => {
               child.expanded = false
               const childKey = child.key
-              if (!child.path || !child.path.length) child.path = [...i.path, childKey]
+              child.path = [...i.path, childKey]
               lastRequestKeys.push(childKey)
               child.children.forEach((item: any) => {
-                if (!item.path || !item.path.length) item.path = [...child.path, item.key]
+                item.path = [...child.path, item.key]
               })
             })
           }
@@ -266,7 +279,7 @@ export function useTreePlugin({
             i.children = JSON.parse(JSON.stringify(children))
             i.children.forEach((child: any) => {
               const childKey = child.key
-              if (!child.path || !child.path.length) child.path = [...i.path, childKey]
+              child.path = [...i.path, childKey]
               rowLastRequestKeys.push(child.key)
             })
             rowExpandedList.forEach((item: ColExpandedListType) => {

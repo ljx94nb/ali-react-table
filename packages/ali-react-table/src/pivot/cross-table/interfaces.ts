@@ -36,4 +36,5 @@ export interface LeftCrossTreeNode extends CrossTreeNode {
 export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPart, 'name'> {
   children?: TopCrossTreeNode[]
   isLeaf?: boolean
+  totalField?: string
 }

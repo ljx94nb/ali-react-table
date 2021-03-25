@@ -250,11 +250,20 @@ export function useTreePlugin({
               return item.value !== i.key
             })
             children = await makeTopChildren(key)
+            children.unshift({
+              key: i.key,
+              value: i.totalField ?? '总计',
+              children: targetChildren,
+              isLeaf: true,
+            })
             i.children = JSON.parse(JSON.stringify(children))
             i.children.forEach((child: any) => {
               child.expanded = false
               const childKey = child.key
-              child.path = [...i.path, childKey]
+              child.path = [...i.path]
+              if (childKey !== child.path[child.path.length - 1]) {
+                child.path.push(childKey)
+              }
               lastRequestKeys.push(childKey)
               child.children.forEach((item: any) => {
                 item.path = [...child.path, item.key]

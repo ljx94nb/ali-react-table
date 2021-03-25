@@ -1,5 +1,6 @@
 import React from 'react'
 import { ArtColumn } from '../interfaces'
+import { LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
 
 export type VirtualEnum = false | true | 'auto'
 
@@ -54,13 +55,13 @@ export interface IPaginationPluginValue {
 }
 
 export interface TreePluginValue {
-  leftTreeConfig: any
-  topTreeConfig: any
+  leftTreeConfig: LeftCrossTreeNode[]
+  topTreeConfig: TopCrossTreeNode[]
   getValues(requestPathArr: string[][], targets: string[]): Promise<any>
   openKeys?: string[]
   targetChildren?: any[]
-  makeTopChildren?(key: string): Promise<any[]>
-  makeLeftChildren?(key: string): Promise<any[]>
+  makeTopChildren?(key: string): Promise<TopCrossTreeNode[]>
+  makeLeftChildren?(key: string): Promise<LeftCrossTreeNode[]>
   isLeafNode?(node: any, nodeMeta: any): boolean
   expandKeys?: { rowKeys: string[]; colKeys: string[] }
 }

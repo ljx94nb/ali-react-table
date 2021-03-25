@@ -7,11 +7,11 @@
 
 import React, { useEffect, useState } from 'react'
 import { useTreePlugin } from 'ali-react-table'
-import { CrossTreeTable } from 'ali-react-table/pivot'
+import { CrossTreeTable, TopCrossTreeNode, LeftCrossTreeNode } from 'ali-react-table/pivot'
 import _ from 'lodash'
 import { getValues } from './mock/tableCellConfig'
 
-const leftTreeConfig = [
+const leftTreeConfig: LeftCrossTreeNode[] = [
   {
     key: 'forenoon',
     value: '上午',
@@ -59,23 +59,25 @@ const targetChildren = [
   },
 ]
 
-const topTreeConfig = [
+const topTreeConfig: TopCrossTreeNode[] = [
   {
     key: '上半年',
     value: '上半年',
     isLeaf: false,
     children: targetChildren,
+    totalField: '所有月份',
   },
   {
     key: '下半年',
     value: '下半年',
     isLeaf: false,
     children: targetChildren,
+    totalField: '所有月份',
   },
 ]
 
 // 模拟请求树状列children的方法
-const makeTopChildren = async (keyPrefix: string) => {
+const makeTopChildren = async (keyPrefix: string): Promise<TopCrossTreeNode[]> => {
   if (keyPrefix === '上半年') {
     return [
       {
@@ -83,36 +85,42 @@ const makeTopChildren = async (keyPrefix: string) => {
         value: '2020-01',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-02',
         value: '2020-02',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-03',
         value: '2020-03',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-04',
         value: '2020-04',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-05',
         value: '2020-05',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-06',
         value: '2020-06',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
     ]
   } else if (
@@ -168,42 +176,48 @@ const makeTopChildren = async (keyPrefix: string) => {
         value: '2020-07',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-08',
         value: '2020-08',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-09',
         value: '2020-09',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-10',
         value: '2020-10',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-11',
         value: '2020-11',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
       {
         key: '2020-12',
         value: '2020-12',
         children: targetChildren,
         isLeaf: false,
+        totalField: '所有周',
       },
     ]
   }
 }
 
-const makeLeftChildren = async (key: string) => [
+const makeLeftChildren = async (key: string): Promise<LeftCrossTreeNode[]> => [
   { key: `${key}-9`, value: '9:00-10:00', isLeaf: true, children: [] as any[] },
   { key: `${key}-10`, value: '10:00-11:00', isLeaf: true, children: [] },
   { key: `${key}-11`, value: '11:00-12:00', isLeaf: true, children: [] },

@@ -56,12 +56,11 @@ export interface IPaginationPluginValue {
 export interface TreePluginValue {
   leftTreeConfig: any
   topTreeConfig: any
-  getValues<T>(requestPath: string[], targets: string[]): T
+  getValues(requestPathArr: string[][], targets: string[]): Promise<any>
   openKeys?: string[]
   targetChildren?: any[]
-  makeTopChildren?(key: string): any[]
-  makeLeftChildren?(key: string): any[]
-  getValue?(leftNode: any, topNode: any): void
+  makeTopChildren?(key: string): Promise<any[]>
+  makeLeftChildren?(key: string): Promise<any[]>
   isLeafNode?(node: any, nodeMeta: any): boolean
   expandKeys?: { rowKeys: string[]; colKeys: string[] }
 }

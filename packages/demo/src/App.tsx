@@ -6,8 +6,8 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { useTreePlugin } from 'ycljx-ali-react-table'
-import { CrossTreeTable } from 'ycljx-ali-react-table/pivot'
+import { useTreePlugin } from 'ali-react-table'
+import { CrossTreeTable } from 'ali-react-table/pivot'
 import _ from 'lodash'
 import { getValues } from './mock/tableCellConfig'
 
@@ -75,7 +75,7 @@ const topTreeConfig = [
 ]
 
 // 模拟请求树状列children的方法
-const makeTopChildren = (keyPrefix: string) => {
+const makeTopChildren = async (keyPrefix: string) => {
   if (keyPrefix === '上半年') {
     return [
       {
@@ -203,7 +203,7 @@ const makeTopChildren = (keyPrefix: string) => {
   }
 }
 
-const makeLeftChildren = (key: string) => [
+const makeLeftChildren = async (key: string) => [
   { key: `${key}-9`, value: '9:00-10:00', isLeaf: true, children: [] as any[] },
   { key: `${key}-10`, value: '10:00-11:00', isLeaf: true, children: [] },
   { key: `${key}-11`, value: '11:00-12:00', isLeaf: true, children: [] },

@@ -18,7 +18,6 @@ export function useTreePlugin({
   getValues,
 }: TreePluginValue) {
   const [targets, setTargets] = useState(targetChildren.map((i: any) => i.key))
-  const [values, setValues] = useState({})
   const [leftTree, setLeftTree] = useState(leftTreeConfig)
   const [topTree, setTopTree] = useState(topTreeConfig)
   const [openKeys, setOpenKeys] = useState([])
@@ -37,6 +36,10 @@ export function useTreePlugin({
   const [isOpenCol, setIsOpenCol] = useState(false)
   // 判断找路径时是否找到目标key，找到了就不要再递归了
   const findFlag = useRef(false)
+  // 存储values的对象
+  const values = useRef({})
+  // 存储请求路径的数组，方便一次请求后端
+  let requestPathArr: string[][] = []
 
   /**
    * 找树中指定key的路径
@@ -77,9 +80,14 @@ export function useTreePlugin({
   /**
    * 处理列最后的key找到列的路径
    */
-  function selectLastRequestKeys(lastRequestKeys: string[], leftPath: string[], rowIndex: number, totalLength: number) {
-    lastRequestKeys.forEach((key: string, colIndex: number) => {
-      const topPath = findRequestPath([{ key: 'root', children: topTree }], key)
+  async function selectLastRequestKeys(
+    lastRequestKeys: string[],
+    leftPath: string[],
+    rowIndex: number,
+    totalLength: number,
+  ) {
+    for (let colIndex = 0; colIndex < lastRequestKeys.length; colIndex++) {
+      const topPath = findRequestPath([{ key: 'root', children: topTree }], lastRequestKeys[colIndex])
       topPath.splice(topPath.indexOf('root'), 1)
       findFlag.current = false
       const requestPath = leftPath.concat(topPath)
@@ -87,26 +95,33 @@ export function useTreePlugin({
       // todo: ⚠️这里要做values的拼接!!! 利用Promise.all请求所有数据之后渲染
       if (requestPath.length) {
         setIsLoading(true)
-        const valuesClone = JSON.parse(JSON.stringify(values))
+        // const valuesClone = JSON.parse(JSON.stringify(values))
         // 如果有key对应那么就不需要再请求
-        if (_.has(valuesClone, requestPath)) {
-          setIsLoading(false)
-          return
-        }
-        _.set(valuesClone, requestPath, getValues(requestPath, targets))
-        const combineValues = Object.assign(values, valuesClone)
+        // if (_.has(valuesClone, requestPath)) {
+        //   console.log(valuesClone)
+        //   setIsLoading(false)
+        //   return
+        // }
+        requestPathArr.push(requestPath)
         // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
         // 只在最后一个对象合并后再重渲染
         if (rowIndex === totalLength - 1 && colIndex === lastRequestKeys.length - 1) {
-          console.log(combineValues)
+          const result: any = await getValues(requestPathArr, targets)
+          if (result && JSON.stringify(result) !== '{}') {
+            Object.keys(result).forEach((key: string) => {
+              _.set(values.current, JSON.parse(key), result[key])
+            })
+            // const combineValues = Object.assign(values, valuesClone)
+            console.log(values.current)
+          }
           // 确保combineValues为最新的
           setTimeout(() => {
-            setValues(JSON.parse(JSON.stringify(combineValues)))
+            // setValues(JSON.parse(JSON.stringify(combineValues)))
             setIsLoading(false)
           }, 0)
         }
       }
-    })
+    }
   }
 
   /**
@@ -207,17 +222,13 @@ export function useTreePlugin({
     const leftPath = leftNode.path
     const topPath = topNode.path
     // console.log(leftPath.concat(topPath))
-    return _.get(values, leftPath.concat(topPath), '')
+    return _.get(values.current, leftPath.concat(topPath), '')
   }
 
   // column的下钻
-  function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = topTree) {
-    lastRequestKeys.length = 0
-    let parentPath: string[] = ['root']
-    let openKey: string
-
-    function dfs(topTree: any) {
-      topTree.forEach((i: any) => {
+  async function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = topTree) {
+    async function dfs(topTree: any) {
+      for (const i of topTree) {
         if (i.key === key) {
           if (i.expanded) {
             // const childrenLen = i.children.length
@@ -238,7 +249,7 @@ export function useTreePlugin({
               else openKey = i.key
               return item.value !== i.key
             })
-            children = makeTopChildren(key)
+            children = await makeTopChildren(key)
             i.children = JSON.parse(JSON.stringify(children))
             i.children.forEach((child: any) => {
               child.expanded = false
@@ -252,16 +263,21 @@ export function useTreePlugin({
           }
           i.expanded = !i.expanded
         } else {
-          dfs(i.children)
+          await dfs(i.children)
         }
-      })
+      }
     }
+
     let children: any[] = []
-    dfs(topTreeClone)
+    let parentPath: string[] = ['root']
+    let openKey: string
+    lastRequestKeys.length = 0
+    await dfs(topTreeClone)
     const colExpandedListBoth = [
       ...colExpandedList,
       ...lastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),
     ]
+
     setTopTree([...topTreeClone])
     setIsOpenRow(false)
     setIsOpenCol(true)
@@ -271,12 +287,12 @@ export function useTreePlugin({
   }
 
   // row的下钻
-  function onChangeOpenKeys(nextKeys: string[], key: string, action: string) {
-    function dfs(leftTree: any) {
-      leftTree.forEach((i: any) => {
+  async function onChangeOpenKeys(nextKeys: string[], key: string, action: string) {
+    async function dfs(leftTree: any) {
+      for (const i of leftTree) {
         if (i.key === key) {
           if (action === 'expand') {
-            children = makeLeftChildren(key)
+            children = await makeLeftChildren(key)
             i.children = JSON.parse(JSON.stringify(children))
             i.children.forEach((child: any) => {
               const childKey = child.key
@@ -298,16 +314,16 @@ export function useTreePlugin({
             // rowLastRequestKeys = [i.key]
           }
         } else {
-          dfs(i.children)
+          await dfs(i.children)
         }
-      })
+      }
     }
     let children: any[] = []
     let parentPath: string[] = ['root']
     let openKey: string
     rowLastRequestKeys.length = 0
     setOpenKeys(nextKeys)
-    dfs(leftTree)
+    await dfs(leftTree)
     const rowExpandedListBoth = [
       ...rowExpandedList,
       ...rowLastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),

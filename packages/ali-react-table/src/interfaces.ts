@@ -51,6 +51,8 @@ export interface ArtColumnDynamicPart {
 }
 
 export interface ArtColumn extends ArtColumnStaticPart, ArtColumnDynamicPart {
+  path?: string[]
+  sortable?: boolean
   /** 该列的子节点 */
   children?: ArtColumn[]
   isLeaf?: boolean

@@ -1,6 +1,7 @@
 import { TreePluginValue } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
+import { SortItem } from '../interfaces'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -225,6 +226,11 @@ export function useTreePlugin({
     return _.get(values.current, leftPath.concat(topPath), '')
   }
 
+  // 列指标排序
+  function onSortColumns(key: string, sortable: boolean, sortOrder: SortItem) {
+    console.log(sortOrder, values.current)
+  }
+
   // column的下钻
   async function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = topTree) {
     async function dfs(topTree: any) {
@@ -352,6 +358,7 @@ export function useTreePlugin({
       openKeys,
       onChangeOpenKeys,
       onChangeOpenColumns,
+      onSortColumns,
       getValue,
       isLeafNode,
       isLoading,

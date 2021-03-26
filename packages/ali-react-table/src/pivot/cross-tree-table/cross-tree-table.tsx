@@ -1,7 +1,7 @@
 import React from 'react'
 import { noop } from 'rxjs'
 import { BaseTable, BaseTableProps } from '../../base-table'
-import { CellProps, ColWithRenderInfo, ArtColumn } from '../../interfaces'
+import { CellProps, ColWithRenderInfo, ArtColumn, SortItem } from '../../interfaces'
 import { CrossTableLeftMetaColumn, LeftCrossTreeNode, ROW_KEY, TopCrossTreeNode } from '../cross-table'
 import buildCrossTreeTable from './buildCrossTreeTable'
 
@@ -16,6 +16,7 @@ export interface CrossTreeTableProps extends Omit<BaseTableProps, 'dataSource' |
   openKeys?: string[]
   onChangeOpenKeys?(nextOpenKeys: string[], key: string, action: string): void
   onChangeOpenColumns?(key: string, expanded: boolean): void
+  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
   indentSize?: number
   isLeafNode?(node: any, nodeMeta: { depth: number; expanded: boolean; rowKey: string }): boolean
 
@@ -84,6 +85,7 @@ export default class CrossTreeTable extends React.Component<CrossTreeTableProps,
       defaultOpenKeys,
       onChangeOpenKeys,
       onChangeOpenColumns,
+      onSortColumns,
       indentSize,
       isLeafNode,
       baseTableRef,
@@ -115,6 +117,7 @@ export default class CrossTreeTable extends React.Component<CrossTreeTableProps,
         dataSource={dataSource}
         columns={columns}
         onChangeOpenColumns={onChangeOpenColumns}
+        onSortColumns={onSortColumns}
       />
     )
   }

@@ -1,7 +1,7 @@
 import cx from 'classnames'
-import React, { CSSProperties } from 'react'
+import React, { CSSProperties, useRef, useState } from 'react'
 import { icons } from '../common-views'
-import { ArtColumn, ColWithRenderInfo } from '../interfaces'
+import { ArtColumn, ColWithRenderInfo, SortItem, SortOrder } from '../interfaces'
 import { getTreeDepth, isLeafNode } from '../utils'
 import { HorizontalRenderRange, RenderInfo } from './interfaces'
 import { Classes } from './styles'
@@ -18,6 +18,13 @@ type IndexedCol = {
   colIndex: number
   col: ArtColumn
   children?: IndexedCol[]
+}
+
+interface SortIconProps {
+  style?: CSSProperties
+  className?: string
+  size?: number
+  order?: SortOrder
 }
 
 /** 根据当前横向虚拟滚动 对 nested.center 进行过滤，结果只保留当前视野内可见的那些列配置 */
@@ -161,12 +168,33 @@ function calculateHeaderRenderInfo(
   return calculateLeveledAndFlat(attachColIndex(nested.full, 0), rowCount)
 }
 
+// 排序的icon
+function SortIcon({ size = 32, style, className, order }: SortIconProps) {
+  return (
+    <svg
+      style={style}
+      className={className}
+      focusable="false"
+      preserveAspectRatio="xMidYMid meet"
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+    >
+      <path fill={order === 'asc' ? '#23A3FF' : '#bfbfbf'} transform="translate(0, 4)" d="M8 8L16 0 24 8z" />
+      <path fill={order === 'desc' ? '#23A3FF' : '#bfbfbf'} transform="translate(0, -4)" d="M24 24L16 32 8 24z " />
+    </svg>
+  )
+}
+
 export default function TableHeader({
   info,
   onChangeOpenColumns,
+  onSortColumns,
 }: {
   info: RenderInfo
   onChangeOpenColumns: (key: string, expanded: boolean) => void
+  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
 }) {
   const { nested, flat, stickyLeftMap, stickyRightMap } = info
   const rowCount = getTreeDepth(nested.full) + 1
@@ -176,6 +204,8 @@ export default function TableHeader({
   const fullFlatCount = flat.full.length
   const leftFlatCount = flat.left.length
   const rightFlatCount = flat.right.length
+
+  const [sortOrder, setSortOrder] = useState<SortItem>({ code: '', order: 'none' })
 
   const renderexpandedIcon = ({ isLeaf, expanded }: { isLeaf?: boolean; expanded?: boolean }) => {
     if (isLeaf === false) {
@@ -193,8 +223,23 @@ export default function TableHeader({
   }
 
   const headerClick = (col: ArtColumn) => {
+    console.log(col)
+    if (col.sortable) {
+      let order: SortOrder = 'none'
+      const code = JSON.stringify(col.path)
+      if (sortOrder.code !== code) {
+        sortOrder.order = 'none'
+      }
+      if (sortOrder.order === 'none') order = 'asc'
+      if (sortOrder.order === 'asc') order = 'desc'
+      if (sortOrder.order === 'desc') order = 'none'
+      setSortOrder((prev) => {
+        onSortColumns(col.key, col.sortable, { code, order })
+        return { code, order }
+      })
+    }
     if (col.isLeaf) return
-    onChangeOpenColumns(col.key, col.expanded)
+    if (typeof onChangeOpenColumns === 'function') onChangeOpenColumns(col.key, col.expanded)
   }
 
   const thead = headerRenderInfo.leveled.map((wrappedCols, level) => {
@@ -234,6 +279,13 @@ export default function TableHeader({
           >
             {renderexpandedIcon(col)}
             {col.title ?? col.name}
+            {col.sortable ? (
+              <SortIcon
+                style={{ userSelect: 'none', marginLeft: 2, position: 'relative', top: 3, flexShrink: 0 }}
+                size={16}
+                order={sortOrder.code === JSON.stringify(col.path) ? sortOrder.order : 'none'}
+              />
+            ) : null}
           </th>
         )
       } else {

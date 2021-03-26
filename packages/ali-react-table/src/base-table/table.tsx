@@ -2,7 +2,7 @@ import cx from 'classnames'
 import React, { CSSProperties, ReactNode } from 'react'
 import { animationFrameScheduler, BehaviorSubject, combineLatest, noop, of, Subscription, timer } from 'rxjs'
 import * as op from 'rxjs/operators'
-import { ArtColumn, ColWithRenderInfo } from '../interfaces'
+import { ArtColumn, ColWithRenderInfo, SortItem } from '../interfaces'
 import { calculateRenderInfo } from './calculations'
 import { EmptyHtmlTable } from './empty'
 import TableHeader from './header'
@@ -103,6 +103,7 @@ export interface BaseTableProps {
   getRowProps?(record: any, rowIndex: number): React.HTMLAttributes<HTMLTableRowElement>
 
   onChangeOpenColumns?(key: string, expanded: boolean): void
+  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
 }
 
 interface BaseTableState {
@@ -210,7 +211,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
   }
 
   private renderTableHeader(info: RenderInfo) {
-    const { stickyTop, hasHeader, onChangeOpenColumns } = this.props
+    const { stickyTop, hasHeader, onChangeOpenColumns, onSortColumns } = this.props
 
     return (
       <div
@@ -220,7 +221,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
           display: hasHeader ? undefined : 'none',
         }}
       >
-        <TableHeader info={info} onChangeOpenColumns={onChangeOpenColumns} />
+        <TableHeader info={info} onChangeOpenColumns={onChangeOpenColumns} onSortColumns={onSortColumns} />
       </div>
     )
   }

@@ -6,10 +6,11 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { useTreePlugin } from 'ali-react-table'
+import { BaseTable, useTreePlugin, useTablePipeline, features, ArtColumn } from 'ali-react-table'
 import { CrossTreeTable, TopCrossTreeNode, LeftCrossTreeNode } from 'ali-react-table/pivot'
 import _ from 'lodash'
 import { getValues } from './mock/tableCellConfig'
+import { format, cdnData } from '../../website/src/assets'
 
 const leftTreeConfig: LeftCrossTreeNode[] = [
   {
@@ -38,24 +39,28 @@ const targetChildren = [
     value: '目标收入',
     isLeaf: true,
     children: [] as any[],
+    sortable: true,
   },
   {
     key: '实际收入',
     value: '实际收入',
     isLeaf: true,
     children: [] as any[],
+    sortable: true,
   },
   {
     key: '目标达成率',
     value: '目标达成率',
     isLeaf: true,
     children: [] as any[],
+    sortable: true,
   },
   {
     key: '收入月环比',
     value: '收入月环比',
     isLeaf: true,
     children: [] as any[],
+    sortable: true,
   },
 ]
 
@@ -412,6 +417,31 @@ function App() {
   // const { recordMap, leftTree, topTree } = pivotView
   // console.log(leftTree, topTree)
 
+  // const { ratio } = format
+
+  // const columns: ArtColumn[] = [
+  //   { code: 'name', name: '数据维度', lock: true, width: 160 },
+  //   { code: 'shop_name', name: '门店', features: { sortable: true } },
+  //   { code: 'imp_uv_dau_pct', name: '曝光UV占DAU比例', render: ratio, align: 'right', features: { sortable: true } },
+  //   { code: 'app_qty_pbt', name: 'APP件单价', align: 'right', features: { sortable: true } },
+  //   { code: 'all_app_trd_amt_1d', name: 'APP成交金额汇总', align: 'right', features: { sortable: true } },
+  // ]
+
+  // const [state, setState] = useState({ isLoading: true, data: [] })
+
+  // useEffect(() => {
+  //   cdnData.getAppTrafficData().then((data) => {
+  //     setState({ isLoading: false, data })
+  //   })
+  // }, [])
+
+  // const pipeline = useTablePipeline()
+  // .input({ columns, dataSource: state.data })
+  // .primaryKey('id')
+  // .use(features.buildTree('id', 'parent_id'))
+  // .use(features.sort({ mode: 'single', highlightColumnWhenActive: true }))
+  // .use(features.treeMode({ defaultOpenKeys: ['B2C'] }))
+
   return (
     <div>
       <CrossTreeTable
@@ -428,6 +458,8 @@ function App() {
         // getValue={getValue}
         // isLeafNode={isLeafNode}
         {...treePlugin}
+        // isLoading={state.isLoading}
+        // {...pipeline.getProps()}
       />
     </div>
     // <div>

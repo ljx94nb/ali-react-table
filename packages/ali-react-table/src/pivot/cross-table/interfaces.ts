@@ -29,6 +29,7 @@ export interface CrossTreeNode {
 export interface LeftCrossTreeNode extends CrossTreeNode {
   children?: CrossTreeNode[]
   isLeaf?: boolean
+  dimension?: string
 }
 
 /** 交叉表上方树状结构的树节点
@@ -37,4 +38,5 @@ export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPar
   children?: TopCrossTreeNode[]
   isLeaf?: boolean
   totalField?: string
+  dimension?: string
 }

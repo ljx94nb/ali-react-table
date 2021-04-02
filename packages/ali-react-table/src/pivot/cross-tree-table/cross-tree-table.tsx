@@ -16,7 +16,7 @@ export interface CrossTreeTableProps extends Omit<BaseTableProps, 'dataSource' |
   openKeys?: string[]
   onChangeOpenKeys?(nextOpenKeys: string[], key: string, action: string): void
   onChangeOpenColumns?(key: string, expanded: boolean): void
-  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
+  onSortColumns?(colIndex: number, sortOrder: SortItem): void
   indentSize?: number
   isLeafNode?(node: any, nodeMeta: { depth: number; expanded: boolean; rowKey: string }): boolean
 

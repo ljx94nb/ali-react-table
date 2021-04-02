@@ -103,7 +103,8 @@ export interface BaseTableProps {
   getRowProps?(record: any, rowIndex: number): React.HTMLAttributes<HTMLTableRowElement>
 
   onChangeOpenColumns?(key: string, expanded: boolean): void
-  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
+  onSortColumns?(colIndex: number, sortOrder: SortItem): void
+  sortColIndex?: number
 }
 
 interface BaseTableState {
@@ -279,7 +280,15 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
   }
 
   private renderTableBody(info: RenderInfo) {
-    const { dataSource, getRowProps, primaryKey, isLoading, emptyCellHeight, footerDataSource, plugins } = this.props
+    const {
+      dataSource,
+      getRowProps,
+      primaryKey,
+      isLoading,
+      emptyCellHeight,
+      footerDataSource,
+      sortColIndex,
+    } = this.props
     const tableBodyClassName = cx(Classes.tableBody, Classes.horizontalScrollContainer, {
       'no-scrollbar': footerDataSource.length > 0,
     })
@@ -323,6 +332,7 @@ export class BaseTable extends React.Component<BaseTableProps, BaseTableState> {
             limit: bottomIndex,
             last: dataSource.length - 1,
           }}
+          sortColIndex={sortColIndex}
         />
         {bottomBlank > 0 && (
           <div key="bottom-blank" className={cx(Classes.virtualBlank, 'bottom')} style={{ height: bottomBlank }} />

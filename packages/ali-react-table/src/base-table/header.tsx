@@ -194,7 +194,7 @@ export default function TableHeader({
 }: {
   info: RenderInfo
   onChangeOpenColumns: (key: string, expanded: boolean) => void
-  onSortColumns?(key: string, sortable: boolean, sortOrder: SortItem): void
+  onSortColumns?(colIndex: number, sortOrder: SortItem): void
 }) {
   const { nested, flat, stickyLeftMap, stickyRightMap } = info
   const rowCount = getTreeDepth(nested.full) + 1
@@ -222,8 +222,7 @@ export default function TableHeader({
     }
   }
 
-  const headerClick = (col: ArtColumn) => {
-    console.log(col)
+  const headerClick = (col: ArtColumn, colIndex: number) => {
     if (col.sortable) {
       let order: SortOrder = 'none'
       const code = JSON.stringify(col.path)
@@ -233,10 +232,8 @@ export default function TableHeader({
       if (sortOrder.order === 'none') order = 'asc'
       if (sortOrder.order === 'asc') order = 'desc'
       if (sortOrder.order === 'desc') order = 'none'
-      setSortOrder((prev) => {
-        onSortColumns(col.key, col.sortable, { code, order })
-        return { code, order }
-      })
+      onSortColumns(colIndex, { code, order })
+      setSortOrder({ code, order })
     }
     if (col.isLeaf) return
     if (typeof onChangeOpenColumns === 'function') onChangeOpenColumns(col.key, col.expanded)
@@ -275,7 +272,7 @@ export default function TableHeader({
               ...headerCellProps.style,
               ...positionStyle,
             }}
-            onClick={() => headerClick(col)}
+            onClick={() => headerClick(col, colIndex)}
           >
             {renderexpandedIcon(col)}
             {col.title ?? col.name}

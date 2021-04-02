@@ -317,6 +317,33 @@ function App() {
   // return <BaseTable defaultColumnWidth={120} isLoading={state.isLoading} {...pipeline.getProps()} plugins={plugins} />
 
   /** CrossTreeTable示例 */
+  // 维度层级必须按照数组顺序依次排列
+  const [dimensionList, setDimensionList] = useState({ row: ['noon', 'time'], col: ['year', 'month', 'week'] })
+
+  // async function getSortCol(rowSortKeys: string[], targetKey: string, sortOrder: string) {
+  //   console.log(rowSortKeys, targetKey, sortOrder)
+  //   return [
+  //     {
+  //       key: 'evening',
+  //       value: '晚上',
+  //       isLeaf: false,
+  //       children: [] as any[],
+  //     },
+  //     {
+  //       key: 'forenoon',
+  //       value: '上午',
+  //       isLeaf: false,
+  //       children: [] as any[],
+  //     },
+  //     {
+  //       key: 'afternoon',
+  //       value: '下午',
+  //       isLeaf: false,
+  //       children: [] as any[],
+  //     },
+  //   ]
+  // }
+
   const { treePlugin } = useTreePlugin({
     leftTreeConfig,
     topTreeConfig,
@@ -325,6 +352,7 @@ function App() {
     targetChildren,
     expandKeys,
     getValues,
+    dimensionList,
   })
 
   // const ALL_DIMS = [
@@ -453,6 +481,7 @@ function App() {
         // 表格第一列的配置
         primaryColumn={{ lock: true, name: '数据维度', width: 200 }}
         defaultColumnWidth={120}
+        style={{ width: 600, maxHeight: 400, overflow: 'auto', border: '1px solid #eee' }}
         // leftTree={leftTree}
         // topTree={topTree}
         // getValue={getValue}

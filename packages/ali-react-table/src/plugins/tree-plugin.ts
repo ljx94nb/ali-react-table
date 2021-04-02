@@ -42,13 +42,15 @@ export function useTreePlugin({
   // 存储values的对象
   const values = useRef({})
   // 存储leftTree的buffer
-  const leftTreeBuffer = useRef([])
+  // const leftTreeBuffer = useRef([])
   // 保存排序的状态
   const [sortOrderTarget, setSortOrderTarget] = useState<SortItem>({ code: '', order: 'none' })
   // 保存属于排序状态的colIndex
   const sortColIndex = useRef<number>(-1)
   // 存储请求路径的数组，方便一次请求后端
   const requestPathArr = useRef<string[]>([])
+  // 定时器
+  let clock: NodeJS.Timeout = null
 
   function findRequestPath(tree: any[], key: string) {
     const tempPath: any[] = []
@@ -103,6 +105,8 @@ export function useTreePlugin({
               item && item.path && item.data && _.set(values.current, item.path, item.data)
             })
             // const combineValues = Object.assign(values, valuesClone)
+            // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
+            // 排序真是煞费苦心，555～
             if (sortStartIndex !== -1) {
               const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
               let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
@@ -123,7 +127,7 @@ export function useTreePlugin({
             // sortDfs(leftTree, sortOrderTarget.current)
           }
         }
-        setTimeout(() => {
+        clock = setTimeout(() => {
           setIsLoading(false)
           requestPathArr.current.length = 0
         }, 0)
@@ -211,6 +215,13 @@ export function useTreePlugin({
       setTimeout(() => {
         onChangeOpenKeys(expandKeys.rowKeys, expandKeys.rowKeys[len - 1], 'expand')
       }, 0)
+    }
+  }, [])
+
+  // 组件卸载时清除定时器
+  useEffect(() => {
+    return () => {
+      clearTimeout(clock)
     }
   }, [])
 

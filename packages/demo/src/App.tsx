@@ -481,7 +481,7 @@ function App() {
         // 表格第一列的配置
         primaryColumn={{ lock: true, name: '数据维度', width: 200 }}
         defaultColumnWidth={120}
-        style={{ width: 600, maxHeight: 400, overflow: 'auto', border: '1px solid #eee' }}
+        // style={{ width: 600, maxHeight: 400, overflow: 'auto', border: '1px solid #eee' }}
         // leftTree={leftTree}
         // topTree={topTree}
         // getValue={getValue}

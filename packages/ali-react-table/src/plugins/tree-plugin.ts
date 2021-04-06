@@ -1,8 +1,10 @@
 import { TreePluginValue } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
-import { set, get } from 'lodash'
+import get from 'lodash/get'
+import set from 'lodash/set'
+import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
-import { treeToFlat, flatToTree, getPath, deepClone } from '../utils'
+import { treeToFlat, flatToTree, getPath } from '../utils'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {

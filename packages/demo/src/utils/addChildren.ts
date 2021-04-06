@@ -1,4 +1,4 @@
-import { deepClone } from 'ali-react-table'
+import deepClone from 'lodash/cloneDeep'
 
 /**
  * 递归数组找到需要添加children的项，并且添加进去

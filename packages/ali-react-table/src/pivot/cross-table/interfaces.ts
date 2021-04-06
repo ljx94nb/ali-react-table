@@ -39,4 +39,5 @@ export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPar
   isLeaf?: boolean
   totalField?: string
   dimension?: string
+  render?(path: string[]): ReactNode
 }

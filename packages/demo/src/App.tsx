@@ -11,6 +11,10 @@ import { CrossTreeTable, TopCrossTreeNode, LeftCrossTreeNode } from 'ali-react-t
 import _ from 'lodash'
 import { getValues } from './mock/tableCellConfig'
 import { format, cdnData } from '../../website/src/assets'
+import styled from 'styled-components'
+import { Dropdown, Menu } from '@alifd/next'
+import { icons } from '../../ali-react-table/src/common-views'
+import * as fusion from '@alifd/next'
 
 const leftTreeConfig: LeftCrossTreeNode[] = [
   {
@@ -64,6 +68,75 @@ const targetChildren = [
   },
 ]
 
+const OperationsDiv = styled.div`
+  display: flex;
+  height: 20px;
+  align-items: center;
+
+  .item {
+    height: 20px;
+    cursor: pointer;
+    color: #3858cf;
+    display: flex;
+    align-items: center;
+
+    &.danger {
+      color: #eb4141;
+    }
+  }
+
+  .sep {
+    height: 10px;
+    width: 1px;
+    margin-left: 12px;
+    margin-right: 12px;
+    background: #eeeeee;
+  }
+`
+function handleEdit(path: string[]) {
+  console.log(path)
+}
+function renderOptions(path: string[]) {
+  return (
+    <OperationsDiv>
+      <div
+        className="item"
+        onClick={() => {
+          handleEdit(path)
+        }}
+      >
+        编辑
+      </div>
+      <div className="sep" />
+      <div
+        className="item danger"
+        onClick={() => {
+          handleEdit(path)
+        }}
+      >
+        删除
+      </div>
+      <div className="sep" />
+      {/* <Dropdown
+        trigger={
+          <div className="item">
+            更多
+            <icons.CaretDown style={{ color: '#A6A6A6' }} />
+          </div>
+        }
+        triggerType="click"
+      >
+        <Menu>
+          <Menu.Item>Option 1</Menu.Item>
+          <Menu.Item>Option 2</Menu.Item>
+          <Menu.Item>Option 3</Menu.Item>
+          <Menu.Item>Option 4</Menu.Item>
+        </Menu>
+      </Dropdown> */}
+    </OperationsDiv>
+  )
+}
+
 const topTreeConfig: TopCrossTreeNode[] = [
   {
     key: '上半年',
@@ -78,6 +151,16 @@ const topTreeConfig: TopCrossTreeNode[] = [
     isLeaf: false,
     children: targetChildren,
     totalField: '所有月份',
+  },
+  {
+    key: 'operation',
+    lock: true,
+    width: 200,
+    value: '操作',
+    isLeaf: true,
+    // data: () => <span>123</span>,
+    render: renderOptions,
+    children: [],
   },
 ]
 
@@ -469,6 +552,126 @@ function App() {
   // .use(features.buildTree('id', 'parent_id'))
   // .use(features.sort({ mode: 'single', highlightColumnWhenActive: true }))
   // .use(features.treeMode({ defaultOpenKeys: ['B2C'] }))
+
+  /**
+   * 树形选择
+   */
+  // function makeChildren(prefix: string) {
+  //   return [
+  //     {
+  //       id: `${prefix}-1`,
+  //       title: '二级标题',
+  //       dept: '消费者事业部-淘宝-UED',
+  //       dest: '云南大理',
+  //       guide: 'Douglas Lee',
+  //       children: [
+  //         {
+  //           id: `${prefix}-1-1`,
+  //           title: '三级标题',
+  //           dept: '盒马产品技术部-UED',
+  //           dest: '云南大理',
+  //           guide: 'Douglas Lee',
+  //         },
+  //         {
+  //           id: `${prefix}-1-2`,
+  //           title: '三级标题',
+  //           dept: '盒马产品技术部-前端',
+  //           dest: '云南大理',
+  //           guide: 'Douglas Lee',
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       id: `${prefix}-2`,
+  //       title: '二级标题',
+  //       dept: '消费者事业部-淘宝-UED',
+  //       dest: '云南大理',
+  //       guide: 'Douglas Lee',
+  //       children: [
+  //         {
+  //           id: `${prefix}-2-1`,
+  //           title: '三级标题',
+  //           dept: '盒马产品技术部-UED',
+  //           dest: '云南大理',
+  //           guide: 'Douglas Lee',
+  //         },
+  //         {
+  //           id: `${prefix}-2-2`,
+  //           title: '三级标题',
+  //           dept: '盒马产品技术部-前端',
+  //           dest: '云南大理',
+  //           guide: 'Douglas Lee',
+  //         },
+  //       ],
+  //     },
+  //     { id: `${prefix}-3`, title: '二级标题', dept: '消费者事业部-淘宝-UED', dest: '云南大理', guide: 'Douglas Lee' },
+  //   ]
+  // }
+
+  // const operationCol = { lock: true, name: '操作', render: renderOptions, width: 200 }
+  // const dataSource = [
+  //   {
+  //     id: '1',
+  //     title: '一级标题',
+  //     dept: '消费者事业部-淘宝-UED',
+  //     dest: 'South Maddison',
+  //     guide: 'Don Moreno',
+  //     children: makeChildren('1'),
+  //   },
+  //   {
+  //     id: '2',
+  //     title: '一级标题',
+  //     dept: '航旅事业部-酒店业务',
+  //     dest: 'Emilhaven',
+  //     guide: 'Douglas Richards',
+  //     children: makeChildren('2'),
+  //   },
+  //   {
+  //     id: '3',
+  //     title: '一级标题',
+  //     dept: '消费者事业部-淘宝-UED',
+  //     dest: '云南大理',
+  //     guide: 'Douglas Lee',
+  //     children: makeChildren('3'),
+  //   },
+  //   {
+  //     id: '4',
+  //     title: '一级标题',
+  //     dept: '信息平台部-用户体验部',
+  //     dest: '杭州千岛湖',
+  //     guide: 'Eric Castillo',
+  //     children: makeChildren('4'),
+  //   },
+  //   { id: '5', title: '一级标题', dept: '消费者事业部-淘宝-UED', dest: 'East Karl', guide: 'Herbert Patton' },
+  // ]
+  // const columns = [
+  //   { code: 'title', name: '标题', width: 200 },
+  //   { code: 'dept', name: '部门名称', width: 180 },
+  //   { code: 'dest', name: '团建目的地', width: 160 },
+  //   { code: 'guide', name: '当地导游', width: 160 },
+  //   operationCol,
+  // ]
+
+  // const pipeline = useTablePipeline({ components: fusion })
+  //   .input({ dataSource, columns })
+  //   .primaryKey('id')
+  //   .use(features.treeMode())
+  //   .use(
+  //     features.treeSelect({
+  //       tree: dataSource,
+  //       rootKey: 'root',
+  //       checkboxPlacement: 'start',
+  //       clickArea: 'cell',
+  //       defaultValue: ['1', '3'],
+  //       checkboxColumn: { lock: true },
+  //       highlightRowWhenSelected: true,
+  //       onChange: (nextValues) => {
+  //         console.log(nextValues)
+  //       },
+  //     }),
+  //   )
+
+  // console.log(pipeline.getProps())
 
   return (
     <div>

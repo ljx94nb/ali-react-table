@@ -1,8 +1,8 @@
 import { TreePluginValue } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
-import _ from 'lodash'
+import { set, get } from 'lodash'
 import { SortItem, SortOrder } from '../interfaces'
-import { treeToFlat, flatToTree, getPath } from '../utils'
+import { treeToFlat, flatToTree, getPath, deepClone } from '../utils'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -102,7 +102,7 @@ export function useTreePlugin({
           console.log(result, sortStartIndex, sortEndIndex)
           if (result && JSON.stringify(result) !== '{}') {
             result.forEach((item: any) => {
-              item && item.path && item.data && _.set(values.current, item.path, item.data)
+              item && item.path && item.data && set(values.current, item.path, item.data)
             })
             // const combineValues = Object.assign(values, valuesClone)
             // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
@@ -111,7 +111,7 @@ export function useTreePlugin({
               const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
               let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
               pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
-              const leftTreeFlatClone = treeToFlat(JSON.parse(JSON.stringify(leftTree))).flatList
+              const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
               const sortLeftTreeFlatClone: any = []
               for (let i = 0; i < pathKeys.length; i++) {
                 for (let j = 0; j < leftTreeFlatClone.length; j++) {
@@ -173,7 +173,7 @@ export function useTreePlugin({
   useEffect(() => {
     const len = expandKeys.colKeys.length
 
-    const topTreeClone = JSON.parse(JSON.stringify(topTree))
+    const topTreeClone = deepClone(topTree)
     lastRequestKeys.length = 0
     topTreeClone.forEach((item: any) => {
       item.path = [item.key]
@@ -239,12 +239,13 @@ export function useTreePlugin({
     rowIndex: number,
     colIndex: number,
   ) => {
-    // console.log(leftNode, topNode)
     if (!leftNode.path || !topNode.path) return ''
     const leftPath = leftNode.path
     const topPath = topNode.path
-    // console.log(leftPath.concat(topPath))
-    return _.get(values.current, leftPath.concat(topPath), '')
+    if (topNode.render && typeof topNode.render === 'function') {
+      return topNode.render(leftPath)
+    }
+    return get(values.current, leftPath.concat(topPath), '')
   }
 
   /**
@@ -350,7 +351,7 @@ export function useTreePlugin({
         if (i.key === key) {
           if (i.expanded) {
             // const childrenLen = i.children.length
-            i.children = JSON.parse(JSON.stringify(targetChildren))
+            i.children = deepClone(targetChildren)
             i.children.forEach((child: any) => {
               child.path = [...i.path, child.key]
             })
@@ -375,7 +376,7 @@ export function useTreePlugin({
               children: targetChildren,
               isLeaf: true,
             })
-            i.children = JSON.parse(JSON.stringify(children))
+            i.children = deepClone(children)
             i.children.forEach((child: any) => {
               child.expanded = false
               const childKey = child.key
@@ -423,7 +424,7 @@ export function useTreePlugin({
         if (i.key === key) {
           if (action === 'expand') {
             children = await makeLeftChildren(key)
-            i.children = JSON.parse(JSON.stringify(children))
+            i.children = deepClone(children)
             i.children.forEach((child: any) => {
               const childKey = child.key
               child.path = [...i.path, childKey]

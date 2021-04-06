@@ -1,3 +1,5 @@
+import { deepClone } from 'ali-react-table'
+
 /**
  * 递归数组找到需要添加children的项，并且添加进去
  * @param data 源数组
@@ -5,7 +7,7 @@
  * @param keyPath 展开路径
  */
 export const addChildren = (data: any[], children: any[], keyPath: string[]) => {
-  const cloneData = JSON.parse(JSON.stringify(data))
+  const cloneData = deepClone(data)
   let keyIndex = 0
   dfs(cloneData, keyIndex)
   return cloneData

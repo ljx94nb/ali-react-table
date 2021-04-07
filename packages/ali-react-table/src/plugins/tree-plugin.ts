@@ -2,9 +2,10 @@ import { TreePluginValue } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
 import get from 'lodash/get'
 import set from 'lodash/set'
-import deepClone from 'lodash/cloneDeep'
+import has from 'lodash/has'
+// import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
-import { treeToFlat, flatToTree, getPath } from '../utils'
+import { treeToFlat, flatToTree, getPath, deepClone } from '../utils'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -89,50 +90,65 @@ export function useTreePlugin({
         //   return
         // }
         const requestPath = `${leftPath.join('_')}|${topPath.join('_')}`
-        requestPathArr.current.push(requestPath)
+        // console.log(values.current)
+        !has(values.current, pathKeyToPathArr(requestPath)) && requestPathArr.current.push(requestPath)
         // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
         // 只在最后一个对象合并后再重渲染
         // todo：⚠️这里列展开的时候还是会多请求一次
-        if (requestPathArr.current.length === totalLength * lastRequestKeys.length) {
-          const sortOptions = getSortOptions(sortOrderTarget)
-          /**
-           * result: 扁平化的结果数组包含data、path和pathKey
-           * sortStartIndex: 排序结果的起始下标
-           * sortEndIndex：排序结果的终止下标
-           *  */
-          const { result, sortStartIndex, sortEndIndex } = await getValues(requestPathArr.current, targets, sortOptions)
-          console.log(result, sortStartIndex, sortEndIndex)
-          if (result && JSON.stringify(result) !== '{}') {
-            result.forEach((item: any) => {
-              item && item.path && item.data && set(values.current, item.path, item.data)
-            })
-            // const combineValues = Object.assign(values, valuesClone)
-            // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
-            // 排序真是煞费苦心，555～
-            if (sortStartIndex !== -1) {
-              const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
-              let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
-              pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
-              const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
-              const sortLeftTreeFlatClone: any = []
-              for (let i = 0; i < pathKeys.length; i++) {
-                for (let j = 0; j < leftTreeFlatClone.length; j++) {
-                  if (JSON.stringify(pathKeys[i]) === JSON.stringify(leftTreeFlatClone[j].path))
-                    sortLeftTreeFlatClone.push(leftTreeFlatClone[j])
+        // console.log(requestPathArr.current.length, totalLength, lastRequestKeys.length)
+        // if (requestPathArr.current.length === totalLength * lastRequestKeys.length) {
+
+        //   // requestPathArr.current.clear()
+        // }
+        if (!clock)
+          clock = setTimeout(async () => {
+            const sortOptions = getSortOptions(sortOrderTarget)
+            /**
+             * result: 扁平化的结果数组包含data、path和pathKey
+             * sortStartIndex: 排序结果的起始下标
+             * sortEndIndex：排序结果的终止下标
+             *  */
+            const requestPathSet = new Set(requestPathArr.current)
+
+            if (requestPathSet.size) {
+              console.log(requestPathSet)
+              const { result, sortStartIndex, sortEndIndex } = await getValues(
+                Array.from(requestPathSet),
+                targets,
+                sortOptions,
+              )
+              // console.log(result, sortStartIndex, sortEndIndex)
+              if (result && JSON.stringify(result) !== '{}') {
+                result.forEach((item: any) => {
+                  item && item.path && item.data && set(values.current, item.path, item.data)
+                })
+                // const combineValues = Object.assign(values, valuesClone)
+                // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
+                // 排序真是煞费苦心，555～
+                if (sortStartIndex !== -1) {
+                  const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
+                  let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
+                  pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
+                  const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
+                  const sortLeftTreeFlatClone: any = []
+                  for (let i = 0; i < pathKeys.length; i++) {
+                    for (let j = 0; j < leftTreeFlatClone.length; j++) {
+                      if (JSON.stringify(pathKeys[i]) === JSON.stringify(leftTreeFlatClone[j].path))
+                        sortLeftTreeFlatClone.push(leftTreeFlatClone[j])
+                    }
+                  }
+                  const sortLeftTreeClone = flatToTree(sortLeftTreeFlatClone)
+                  setLeftTree(sortLeftTreeClone)
+                  // console.log(sortLeftTreeClone)
                 }
+                // addDataDfs(leftTree, [], sortOrderTarget.current)
+                // sortDfs(leftTree, sortOrderTarget.current)
               }
-              const sortLeftTreeClone = flatToTree(sortLeftTreeFlatClone)
-              setLeftTree(sortLeftTreeClone)
-              // console.log(sortLeftTreeClone)
             }
-            // addDataDfs(leftTree, [], sortOrderTarget.current)
-            // sortDfs(leftTree, sortOrderTarget.current)
-          }
-        }
-        clock = setTimeout(() => {
-          setIsLoading(false)
-          requestPathArr.current.length = 0
-        }, 0)
+
+            setIsLoading(false)
+            requestPathArr.current = []
+          }, 0)
       }
     }
   }
@@ -183,7 +199,7 @@ export function useTreePlugin({
       item.children.forEach((child: any) => {
         child.path = [...item.path, child.key]
       })
-      lastRequestKeys.push(item.key)
+      item.render === undefined && lastRequestKeys.push(item.key)
     })
 
     setTopTree([...topTreeClone])
@@ -278,6 +294,18 @@ export function useTreePlugin({
   // }
 
   /**
+   * 处理pathKeys转换成数组形式的pathArr
+   * @param str pathKey
+   * @returns pathArr
+   */
+  function pathKeyToPathArr(str: string) {
+    return str
+      .split('|')
+      .map((i: string) => i.split('_').map((j: string) => j.split(':')[1]))
+      .reduce((a, b) => a.concat(b))
+  }
+
+  /**
    * 获取leftTree的所有keys的路径
    * @returns pathArr = ["noon:forenoon", "noon:forenoon_time:forenoon-9", "noon:forenoon_time:forenoon-10", "noon:forenoon_time:forenoon-11", "noon:afternoon", "noon:evening"]
    *  */
@@ -347,7 +375,7 @@ export function useTreePlugin({
   }
 
   // column的下钻
-  async function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = topTree) {
+  async function onChangeOpenColumns(key: string, expanded: boolean, topTreeClone = deepClone(topTree)) {
     async function dfs(topTree: any) {
       for (const i of topTree) {
         if (i.key === key) {
@@ -365,6 +393,7 @@ export function useTreePlugin({
             // parentPath = colExpandedList[0].key
             openCol = false
             lastRequestKeys.push(i.key)
+            // console.log(colExpandedList, lastRequestKeys)
           } else {
             colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
               if (item.value === i.key) parentPath = item.path

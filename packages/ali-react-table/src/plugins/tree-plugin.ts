@@ -5,7 +5,7 @@ import set from 'lodash/set'
 import has from 'lodash/has'
 // import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
-import { treeToFlat, flatToTree, getPath, deepClone } from '../utils'
+import { treeToFlat, flatToTree, getPath, deepClone, getTreeMinDepth } from '../utils'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -91,10 +91,11 @@ export function useTreePlugin({
         // }
         const requestPath = `${leftPath.join('_')}|${topPath.join('_')}`
         // console.log(values.current)
-        !has(values.current, pathKeyToPathArr(requestPath)) && requestPathArr.current.push(requestPath)
+        if (!has(values.current, pathKeyToPathArr(requestPath)) || sortColIndex.current !== -1)
+          requestPathArr.current.push(requestPath)
         // console.log(rowIndex, totalLength - 1, colIndex, lastRequestKeys.length - 1)
         // 只在最后一个对象合并后再重渲染
-        // todo：⚠️这里列展开的时候还是会多请求一次
+        // todo：⚠️这里列展开的时候还是会多请求一次（已解决～）
         // console.log(requestPathArr.current.length, totalLength, lastRequestKeys.length)
         // if (requestPathArr.current.length === totalLength * lastRequestKeys.length) {
 
@@ -261,7 +262,19 @@ export function useTreePlugin({
     const leftPath = leftNode.path
     const topPath = topNode.path
     if (topNode.render && typeof topNode.render === 'function') {
-      return topNode.render(leftPath)
+      const temp = leftPath.map((key: string, index: number) => `${dimensionList.row[index]}:${key}`)
+      const keyArr = colExpandedList.map((item: ColExpandedListType) => item.value)
+      const pathArr: string[] = []
+
+      keyArr.forEach((key: string) => {
+        let path = findRequestPath([{ key: 'root', children: topTree }], key)
+        path.shift()
+        path = path.map((item: string, index: number) => `${dimensionList.col[index]}:${item}`)
+        pathArr.push(path.join('_'))
+        findFlag.current = false
+      })
+
+      return topNode.render(pathArr.map((key: string) => `${temp.join('_')}|${key}`))
     }
     return get(values.current, leftPath.concat(topPath), '')
   }
@@ -309,25 +322,26 @@ export function useTreePlugin({
    * 获取leftTree的所有keys的路径
    * @returns pathArr = ["noon:forenoon", "noon:forenoon_time:forenoon-9", "noon:forenoon_time:forenoon-10", "noon:forenoon_time:forenoon-11", "noon:afternoon", "noon:evening"]
    *  */
-  function getLeftTreeKeys(leftTree: any[]) {
-    function dfs(leftTree: any[]) {
+  function getLeftTreeKeys(leftTree: any[], dimensionList: string[], deepth = Infinity) {
+    function dfs(leftTree: any[], deep: number) {
+      deep += 1
       leftTree.forEach((item: any) => {
         keysArr.push(item.key)
-        if (item.children.length) {
-          dfs(item.children)
+        if (item.children.length && deep < deepth) {
+          dfs(item.children, deep)
         }
       })
     }
     const keysArr: string[] = []
     const pathArr: string[] = []
-    dfs(leftTree)
+    dfs(leftTree, 0)
     keysArr.forEach((key: string) => {
       let tempArr: string[] = []
       leftTree.forEach((item: any) => {
         !findFlag.current && getPath(item, key, tempArr, findFlag)
       })
       findFlag.current = false
-      tempArr = tempArr.map((item: string, index: number) => `${dimensionList.row[index]}:${item}`)
+      tempArr = tempArr.map((item: string, index: number) => `${dimensionList[index]}:${item}`)
       pathArr.push(tempArr.join('_'))
     })
     return pathArr
@@ -336,7 +350,7 @@ export function useTreePlugin({
   // 获取排序请求的options：rowSortKeys、targetKey、sortOrder
   function getSortOptions(sortOrder: SortItem) {
     if (sortOrder.code !== '' && sortOrder.order !== 'none') {
-      let rowSortKeys = getLeftTreeKeys(leftTree)
+      let rowSortKeys = getLeftTreeKeys(leftTree, dimensionList.row)
       let sortCodePath = JSON.parse(sortOrder.code)
       const targetKey = sortCodePath.pop()
       sortCodePath = sortCodePath.map((item: string, index: number) => `${dimensionList.col[index]}:${item}`)

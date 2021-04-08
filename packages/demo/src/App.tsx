@@ -6,7 +6,7 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { BaseTable, useTreePlugin, useTablePipeline, features, ArtColumn } from 'ali-react-table'
+import { BaseTable, useTreePlugin, useTablePipeline, features, ArtColumn, deepClone } from 'ali-react-table'
 import { CrossTreeTable, TopCrossTreeNode, LeftCrossTreeNode } from 'ali-react-table/pivot'
 import _ from 'lodash'
 import { getValues } from './mock/tableCellConfig'
@@ -68,75 +68,6 @@ const targetChildren = [
   },
 ]
 
-const OperationsDiv = styled.div`
-  display: flex;
-  height: 20px;
-  align-items: center;
-
-  .item {
-    height: 20px;
-    cursor: pointer;
-    color: #3858cf;
-    display: flex;
-    align-items: center;
-
-    &.danger {
-      color: #eb4141;
-    }
-  }
-
-  .sep {
-    height: 10px;
-    width: 1px;
-    margin-left: 12px;
-    margin-right: 12px;
-    background: #eeeeee;
-  }
-`
-function handleEdit(path: string[]) {
-  console.log(path)
-}
-function renderOptions(path: string[]) {
-  return (
-    <OperationsDiv>
-      <div
-        className="item"
-        onClick={() => {
-          handleEdit(path)
-        }}
-      >
-        编辑
-      </div>
-      <div className="sep" />
-      <div
-        className="item danger"
-        onClick={() => {
-          handleEdit(path)
-        }}
-      >
-        删除
-      </div>
-      <div className="sep" />
-      {/* <Dropdown
-        trigger={
-          <div className="item">
-            更多
-            <icons.CaretDown style={{ color: '#A6A6A6' }} />
-          </div>
-        }
-        triggerType="click"
-      >
-        <Menu>
-          <Menu.Item>Option 1</Menu.Item>
-          <Menu.Item>Option 2</Menu.Item>
-          <Menu.Item>Option 3</Menu.Item>
-          <Menu.Item>Option 4</Menu.Item>
-        </Menu>
-      </Dropdown> */}
-    </OperationsDiv>
-  )
-}
-
 const topTreeConfig: TopCrossTreeNode[] = [
   {
     key: '上半年',
@@ -151,16 +82,6 @@ const topTreeConfig: TopCrossTreeNode[] = [
     isLeaf: false,
     children: targetChildren,
     totalField: '所有月份',
-  },
-  {
-    key: 'operation',
-    lock: true,
-    width: 200,
-    value: '操作',
-    isLeaf: true,
-    // data: () => <span>123</span>,
-    render: renderOptions,
-    children: [],
   },
 ]
 
@@ -311,367 +232,127 @@ const makeLeftChildren = async (key: string): Promise<LeftCrossTreeNode[]> => [
   { key: `${key}-11`, value: '11:00-12:00', isLeaf: true, children: [] },
 ]
 
-const expandKeys = {
-  rowKeys: [] as string[],
-  colKeys: [] as string[],
-}
+// const expandKeys = {
+//   rowKeys: ['forenoon'] as string[],
+//   colKeys: ['上半年'] as string[],
+// }
+
+const OperationsDiv = styled.div`
+  display: flex;
+  height: 20px;
+  align-items: center;
+
+  .item {
+    height: 20px;
+    cursor: pointer;
+    color: #3858cf;
+    display: flex;
+    align-items: center;
+
+    &.danger {
+      color: #eb4141;
+    }
+  }
+
+  .sep {
+    height: 10px;
+    width: 1px;
+    margin-left: 12px;
+    margin-right: 12px;
+    background: #eeeeee;
+  }
+`
 
 function App() {
-  // const columns: ArtColumn[] = [
-  //   {
-  //     code: 'name',
-  //     name: '数据维度',
-  //     lock: true,
-  //     width: 200,
-  //     // 通过自定义 getValue，可以实现「根据节点深度选取合适的数据字段」
-  //     // getValue(record: any) {
-  //     //   const meta = record[treeMetaSymbol]
-  //     //   const array = [record.subsidiary_name, record.city_name, record.shop_name]
-  //     //   return array[meta.depth]
-  //     // },
-  //   },
-  //   { code: 'shop_name', name: '门店' },
-  //   { code: 'imp_uv_dau_pct', name: '曝光UV占DAU比例', render: ratio, align: 'right' },
-  //   { code: 'app_qty_pbt', name: 'APP件单价', align: 'right' },
-  //   { code: 'all_app_trd_amt_1d', name: 'APP成交金额汇总', align: 'right' },
-  // ]
-
-  // const [state, setState] = useState({ isLoading: true, data: [] as any[] })
-  // const [openKeys, onChangeOpenKeys] = useState([])
-
-  // useEffect(() => {
-  //   requestData({ url: 'data' }).then((data) => {
-  //     console.log(data)
-  //     setState({ isLoading: false, data: data as any[] })
-  //   })
-  // }, [])
-
-  // const loadNodeDataByParentKey = async (keyPath: string[]) => {
-  //   setState((prev) => ({ isLoading: true, data: prev.data }))
-  //   const keyData = await requestDetailData({ key: keyPath[keyPath.length - 1] })
-  //   const data = addChildren(state.data, keyData as any[], keyPath)
-  //   console.log(data)
-  //   setState({
-  //     isLoading: false,
-  //     data,
-  //   })
-  //   return keyData
-  // }
-
-  // const { plugins, setPlugins } = usePlugins()
-
-  // const pipeline = useTablePipeline({ components: fusion }) // 传组件定义表格的总体样式
-  //   .input({ dataSource: state.data, columns }) // 输入datasource和列项目
-  //   .primaryKey('id') // 输入每一行的唯一id
-  //   // .use(features.buildTree('id', 'parent_id')) // 利用use为表格添加功能，这里把数据处理成数状结构
-  //   .use(
-  //     features.treeMode({
-  //       openKeys,
-  //       onChangeOpenKeys(nextKeys, key, action, pathArr) {
-  //         console.log(nextKeys, key, action, pathArr)
-  //         if (state.isLoading) {
-  //           return
-  //         }
-  //         onChangeOpenKeys(nextKeys)
-
-  //         const needLoadData = state.data.every((d) => d.parent_id !== key)
-  //         if (action === 'expand' && needLoadData) {
-  //           // 如果当前展开了某一个节点，且该节点的子节点数据尚未加载，
-  //           //  则调用 loadNodeDataByParentKey 加载更多数据
-  //           const paths = pathArr.map((i) => i.key)
-  //           loadNodeDataByParentKey(paths).then((data) => {
-  //             setPlugins(
-  //               new PaginationPlugin('paginationPlugin', {
-  //                 data: data as any,
-  //                 onChange: (currentPage) => {},
-  //               }),
-  //             )
-  //           })
-  //         }
-  //       },
-  //       // 提供一个自定义的 isLeafNode 方法，使得表格为父节点正确渲染收拢/展开按钮
-  //       isLeafNode(node) {
-  //         return node.children === undefined
-  //       },
-  //     }),
-  //   ) // 设置节点的展开功能：哪个节点展开、展开的回调等
-
-  // // console.log(plugins)
-  // return <BaseTable defaultColumnWidth={120} isLoading={state.isLoading} {...pipeline.getProps()} plugins={plugins} />
-
   /** CrossTreeTable示例 */
+  function handleDelete(path: string[]) {
+    // console.log(path)
+    setIsLoading(true)
+    const leftPath = path[0]
+      .split('|')[0]
+      .split('_')
+      .map((j: string) => j.split(':')[1])
+    console.log(treePlugin.leftTree)
+    // const leftTreeClone = deepClone(leftTree)
+    dfs(treePlugin.leftTree)
+    setLeftTree([...treePlugin.leftTree])
+    setIsLoading(false)
+
+    function dfs(leftTreeClone: LeftCrossTreeNode[]) {
+      leftTreeClone.forEach((item: LeftCrossTreeNode, index: number) => {
+        if (JSON.stringify(item.path) === JSON.stringify(leftPath)) {
+          leftTreeClone.splice(index, 1)
+          return
+        }
+        if (item.children && item.children.length) {
+          dfs(item.children)
+        }
+      })
+    }
+  }
+
+  function renderOptions(path: string[]) {
+    return (
+      <OperationsDiv>
+        <div className="item" onClick={() => {}}>
+          编辑
+        </div>
+        <div className="sep" />
+        <div
+          className="item danger"
+          onClick={() => {
+            handleDelete(path)
+          }}
+        >
+          删除
+        </div>
+        <div className="sep" />
+        {/* <Dropdown
+        trigger={
+          <div className="item">
+            更多
+            <icons.CaretDown style={{ color: '#A6A6A6' }} />
+          </div>
+        }
+        triggerType="click"
+      >
+        <Menu>
+          <Menu.Item>Option 1</Menu.Item>
+          <Menu.Item>Option 2</Menu.Item>
+          <Menu.Item>Option 3</Menu.Item>
+          <Menu.Item>Option 4</Menu.Item>
+        </Menu>
+      </Dropdown> */}
+      </OperationsDiv>
+    )
+  }
+
   // 维度层级必须按照数组顺序依次排列
   const [dimensionList, setDimensionList] = useState({ row: ['noon', 'time'], col: ['year', 'month', 'week'] })
 
-  // async function getSortCol(rowSortKeys: string[], targetKey: string, sortOrder: string) {
-  //   console.log(rowSortKeys, targetKey, sortOrder)
-  //   return [
-  //     {
-  //       key: 'evening',
-  //       value: '晚上',
-  //       isLeaf: false,
-  //       children: [] as any[],
-  //     },
-  //     {
-  //       key: 'forenoon',
-  //       value: '上午',
-  //       isLeaf: false,
-  //       children: [] as any[],
-  //     },
-  //     {
-  //       key: 'afternoon',
-  //       value: '下午',
-  //       isLeaf: false,
-  //       children: [] as any[],
-  //     },
-  //   ]
-  // }
+  useEffect(() => {
+    // const topTreeClone = deepClone(topTree)
+    treePlugin.topTree.push({
+      key: 'operation',
+      lock: true,
+      width: 200,
+      value: '操作',
+      isLeaf: true,
+      render: renderOptions,
+      children: [],
+    })
+    // setTopTree(topTree)
+  }, [])
 
-  const { treePlugin } = useTreePlugin({
+  const { treePlugin, setIsLoading, setLeftTree, setTopTree } = useTreePlugin({
     leftTreeConfig,
     topTreeConfig,
     makeTopChildren,
     makeLeftChildren,
     targetChildren,
-    expandKeys,
     getValues,
     dimensionList,
   })
-
-  // const ALL_DIMS = [
-  //   { code: 'planet', name: '子公司' },
-  //   { code: 'season', name: '季度' },
-  //   { code: 'month', name: '月份' },
-  //   { code: 'area', name: '门店' },
-  //   { code: 'one', name: '一级类目' },
-  //   { code: 'two', name: '二级类目' },
-  //   { code: 'three', name: '三级类目' },
-  // ]
-
-  // const INDICATORS = [
-  //   {
-  //     code: 'a',
-  //     name: '目标收入',
-  //     align: 'right' as const,
-  //     render: amount,
-  //     features: { sortable: true },
-  //     expression: 'SUM(a)',
-  //   },
-  //   {
-  //     code: 'b',
-  //     name: '实际收入',
-  //     render: amount,
-  //     align: 'right' as const,
-  //     features: { sortable: true },
-  //     expression: 'SUM(b)',
-  //   },
-  //   {
-  //     code: 'c',
-  //     name: '上月收入',
-  //     render: amount,
-  //     hidden: true,
-  //     align: 'right' as const,
-  //     features: { sortable: true },
-  //     expression: 'SUM(c)',
-  //   },
-  //   {
-  //     code: 'lfl',
-  //     name: '收入月环比',
-  //     render: lfl,
-  //     align: 'right' as const,
-  //     features: { sortable: true },
-  //     expression: '(a - c) / a',
-  //   },
-  //   {
-  //     code: 'd',
-  //     name: '重点商品收入',
-  //     render: amount,
-  //     align: 'right' as const,
-  //     features: { sortable: true },
-  //     expression: 'SUM(d)',
-  //   },
-  //   {
-  //     code: 'rate',
-  //     name: '重点商品收入占比',
-  //     render: ratio,
-  //     align: 'right' as const,
-  //     features: { sortable: true },
-  //     expression: 'd / b',
-  //   },
-  // ]
-
-  // const [pivot] = useState(() => {
-  //   return new Pivot({
-  //     allDimensions: ALL_DIMS,
-  //     allIndicators: INDICATORS,
-  //     dimCodes: ['planet', 'area', 'season'],
-  //   })
-  // })
-
-  // const [pivotView] = useState(() => new PivotView(pivot))
-  // console.log(pivot)
-
-  // useEffect(() => {
-  //   getIncomeData().then(
-  //     action((data: any[]) => {
-  //       pivot.data = data
-  //       pivot.isLoading = false
-  //       pivot.filters = Object.fromEntries(
-  //         pivot.allDimensions.map((dim) => {
-  //           return [dim.code, _.uniq(data.map((d) => d[dim.code]))]
-  //         }),
-  //       )
-  //     }),
-  //   )
-  // }, [])
-
-  // const { recordMap, leftTree, topTree } = pivotView
-  // console.log(leftTree, topTree)
-
-  // const { ratio } = format
-
-  // const columns: ArtColumn[] = [
-  //   { code: 'name', name: '数据维度', lock: true, width: 160 },
-  //   { code: 'shop_name', name: '门店', features: { sortable: true } },
-  //   { code: 'imp_uv_dau_pct', name: '曝光UV占DAU比例', render: ratio, align: 'right', features: { sortable: true } },
-  //   { code: 'app_qty_pbt', name: 'APP件单价', align: 'right', features: { sortable: true } },
-  //   { code: 'all_app_trd_amt_1d', name: 'APP成交金额汇总', align: 'right', features: { sortable: true } },
-  // ]
-
-  // const [state, setState] = useState({ isLoading: true, data: [] })
-
-  // useEffect(() => {
-  //   cdnData.getAppTrafficData().then((data) => {
-  //     setState({ isLoading: false, data })
-  //   })
-  // }, [])
-
-  // const pipeline = useTablePipeline()
-  // .input({ columns, dataSource: state.data })
-  // .primaryKey('id')
-  // .use(features.buildTree('id', 'parent_id'))
-  // .use(features.sort({ mode: 'single', highlightColumnWhenActive: true }))
-  // .use(features.treeMode({ defaultOpenKeys: ['B2C'] }))
-
-  /**
-   * 树形选择
-   */
-  // function makeChildren(prefix: string) {
-  //   return [
-  //     {
-  //       id: `${prefix}-1`,
-  //       title: '二级标题',
-  //       dept: '消费者事业部-淘宝-UED',
-  //       dest: '云南大理',
-  //       guide: 'Douglas Lee',
-  //       children: [
-  //         {
-  //           id: `${prefix}-1-1`,
-  //           title: '三级标题',
-  //           dept: '盒马产品技术部-UED',
-  //           dest: '云南大理',
-  //           guide: 'Douglas Lee',
-  //         },
-  //         {
-  //           id: `${prefix}-1-2`,
-  //           title: '三级标题',
-  //           dept: '盒马产品技术部-前端',
-  //           dest: '云南大理',
-  //           guide: 'Douglas Lee',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: `${prefix}-2`,
-  //       title: '二级标题',
-  //       dept: '消费者事业部-淘宝-UED',
-  //       dest: '云南大理',
-  //       guide: 'Douglas Lee',
-  //       children: [
-  //         {
-  //           id: `${prefix}-2-1`,
-  //           title: '三级标题',
-  //           dept: '盒马产品技术部-UED',
-  //           dest: '云南大理',
-  //           guide: 'Douglas Lee',
-  //         },
-  //         {
-  //           id: `${prefix}-2-2`,
-  //           title: '三级标题',
-  //           dept: '盒马产品技术部-前端',
-  //           dest: '云南大理',
-  //           guide: 'Douglas Lee',
-  //         },
-  //       ],
-  //     },
-  //     { id: `${prefix}-3`, title: '二级标题', dept: '消费者事业部-淘宝-UED', dest: '云南大理', guide: 'Douglas Lee' },
-  //   ]
-  // }
-
-  // const operationCol = { lock: true, name: '操作', render: renderOptions, width: 200 }
-  // const dataSource = [
-  //   {
-  //     id: '1',
-  //     title: '一级标题',
-  //     dept: '消费者事业部-淘宝-UED',
-  //     dest: 'South Maddison',
-  //     guide: 'Don Moreno',
-  //     children: makeChildren('1'),
-  //   },
-  //   {
-  //     id: '2',
-  //     title: '一级标题',
-  //     dept: '航旅事业部-酒店业务',
-  //     dest: 'Emilhaven',
-  //     guide: 'Douglas Richards',
-  //     children: makeChildren('2'),
-  //   },
-  //   {
-  //     id: '3',
-  //     title: '一级标题',
-  //     dept: '消费者事业部-淘宝-UED',
-  //     dest: '云南大理',
-  //     guide: 'Douglas Lee',
-  //     children: makeChildren('3'),
-  //   },
-  //   {
-  //     id: '4',
-  //     title: '一级标题',
-  //     dept: '信息平台部-用户体验部',
-  //     dest: '杭州千岛湖',
-  //     guide: 'Eric Castillo',
-  //     children: makeChildren('4'),
-  //   },
-  //   { id: '5', title: '一级标题', dept: '消费者事业部-淘宝-UED', dest: 'East Karl', guide: 'Herbert Patton' },
-  // ]
-  // const columns = [
-  //   { code: 'title', name: '标题', width: 200 },
-  //   { code: 'dept', name: '部门名称', width: 180 },
-  //   { code: 'dest', name: '团建目的地', width: 160 },
-  //   { code: 'guide', name: '当地导游', width: 160 },
-  //   operationCol,
-  // ]
-
-  // const pipeline = useTablePipeline({ components: fusion })
-  //   .input({ dataSource, columns })
-  //   .primaryKey('id')
-  //   .use(features.treeMode())
-  //   .use(
-  //     features.treeSelect({
-  //       tree: dataSource,
-  //       rootKey: 'root',
-  //       checkboxPlacement: 'start',
-  //       clickArea: 'cell',
-  //       defaultValue: ['1', '3'],
-  //       checkboxColumn: { lock: true },
-  //       highlightRowWhenSelected: true,
-  //       onChange: (nextValues) => {
-  //         console.log(nextValues)
-  //       },
-  //     }),
-  //   )
-
-  // console.log(pipeline.getProps())
 
   return (
     <div>
@@ -694,30 +375,6 @@ function App() {
         // {...pipeline.getProps()}
       />
     </div>
-    // <div>
-    //   <CrossTreeTable
-    //     style={{ marginTop: 8 }}
-    //     primaryColumn={{
-    //       lock: true,
-    //       name: '数据维度',
-    //       width: 180,
-    //     }}
-    //     defaultColumnWidth={120}
-    //     isLoading={pivot.isLoading}
-    //     leftTree={leftTree}
-    //     topTree={topTree}
-    //     getValue={(leftNode, topNode) => {
-    //       const record = recordMap.get(leftNode.key)
-    //       const ind = topNode.data.indicator
-    //       console.log(record, ind)
-    //       return record?.[ind.code]
-    //     }}
-    //     render={(value, leftNode, topNode) => {
-    //       const ind = topNode.data.indicator
-    //       return ind.render ? ind.render(value) : value
-    //     }}
-    //   />
-    // </div>
   )
 }
 

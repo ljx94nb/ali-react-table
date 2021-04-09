@@ -61,16 +61,15 @@ export interface SortOptions {
 }
 
 export interface TreePluginValue {
-  leftTreeConfig: LeftCrossTreeNode[]
-  topTreeConfig: TopCrossTreeNode[]
   getValues(requestPathArr: string[], targets: string[], sortOptions: SortOptions): Promise<any>
   openKeys?: string[]
   targetChildren?: any[]
-  makeTopChildren?(key: string): Promise<TopCrossTreeNode[]>
-  makeLeftChildren?(key: string): Promise<LeftCrossTreeNode[]>
+  makeTopChildren?(keyPrefix: string, dimension: string, targetKeys: string[]): Promise<TopCrossTreeNode[]>
+  makeLeftChildren?(keyPrefix: string, dimension: string): Promise<LeftCrossTreeNode[]>
   isLeafNode?(node: any, nodeMeta: any): boolean
   expandKeys?: { rowKeys: string[]; colKeys: string[] }
   dimensionList: { row: string[]; col: string[] }
+  treeInit?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]): Promise<void>
 }
 
 // pipeline的plugins对象结构

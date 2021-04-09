@@ -41,5 +41,5 @@ export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPar
   totalField?: string
   dimension?: string
   path?: string[]
-  render?(path: string[]): ReactNode
+  render?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]): ReactNode
 }

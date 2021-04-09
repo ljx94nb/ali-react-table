@@ -6,6 +6,7 @@ import has from 'lodash/has'
 // import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
 import { treeToFlat, flatToTree, getPath, deepClone, getTreeMinDepth } from '../utils'
+import { LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -13,19 +14,19 @@ interface ColExpandedListType {
   value: string
 }
 
+type OpenCode = 'row' | 'col' | 'none'
+
 export function useTreePlugin({
-  leftTreeConfig,
-  topTreeConfig,
   makeTopChildren,
   makeLeftChildren,
   targetChildren,
   expandKeys,
   getValues,
   dimensionList,
+  treeInit,
 }: TreePluginValue) {
-  const [targets, setTargets] = useState(targetChildren.map((i: any) => i.key))
-  const [leftTree, setLeftTree] = useState(leftTreeConfig)
-  const [topTree, setTopTree] = useState(topTreeConfig)
+  const [leftTree, setLeftTree] = useState<LeftCrossTreeNode[]>([])
+  const [topTree, setTopTree] = useState<TopCrossTreeNode[]>([])
   const [openKeys, setOpenKeys] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   // 列最后的key
@@ -37,9 +38,9 @@ export function useTreePlugin({
   // 行展开的项
   let [rowExpandedList, setRowExpandedList] = useState<ColExpandedListType[]>([])
   // 是否点击了行展开
-  const [isOpenRow, setIsOpenRow] = useState(false)
+  const [openCode, setOpenCode] = useState<OpenCode>('none')
   // 是否点击了列展开
-  const [isOpenCol, setIsOpenCol] = useState(false)
+  // const [isOpenCol, setIsOpenCol] = useState(false)
   // 判断找路径时是否找到目标key，找到了就不要再递归了
   const findFlag = useRef(false)
   // 存储values的对象
@@ -91,8 +92,8 @@ export function useTreePlugin({
         if (!clock)
           clock = setTimeout(() => {
             requestPathArr.current = Array.from(requestPathSet.current)
-            requestPathSet.current.clear()
             requestData(requestPathArr.current)
+            requestPathSet.current.clear()
           }, 0)
       }
     }
@@ -109,14 +110,14 @@ export function useTreePlugin({
         leftPath[i] = `${dimensionList.row[i]}:${leftPath[i]}`
       }
       findFlag.current = false
-      if (isOpenRow) {
+      if (openCode === 'row') {
         selectLastRequestKeys(
           colExpandedList.map((i: ColExpandedListType) => i.value),
           leftPath,
           rowIndex,
           rowLastRequestKeys.length,
         )
-      } else {
+      } else if (openCode === 'col') {
         selectLastRequestKeys(lastRequestKeys, leftPath, rowIndex, rowLastRequestKeys.length)
       }
     })
@@ -126,60 +127,64 @@ export function useTreePlugin({
    * 请求数据矩阵
    */
   async function requestData(requestPathArr: string[]) {
-    setIsLoading(true)
-    const sortOptions = getSortOptions(sortOrderTarget)
-
-    if (requestPathArr.length) {
-      console.log(requestPathArr)
-      const { result, sortStartIndex, sortEndIndex } = await getValues(requestPathArr, targets, sortOptions)
-      // console.log(result, sortStartIndex, sortEndIndex)
-      if (result && JSON.stringify(result) !== '{}') {
-        result.forEach((item: any) => {
-          item && item.path && item.data && set(values.current, item.path, item.data)
-        })
-        // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
-        // 排序真是煞费苦心，555～
-        if (sortStartIndex !== -1) {
-          const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
-          let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
-          pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
-          const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
-          const sortLeftTreeFlatClone: any = []
-          for (let i = 0; i < pathKeys.length; i++) {
-            for (let j = 0; j < leftTreeFlatClone.length; j++) {
-              if (JSON.stringify(pathKeys[i]) === JSON.stringify(leftTreeFlatClone[j].path))
-                sortLeftTreeFlatClone.push(leftTreeFlatClone[j])
+    try {
+      if (requestPathArr.length) {
+        console.log(requestPathArr)
+        setIsLoading(true)
+        const sortOptions = getSortOptions(sortOrderTarget)
+        const { result, sortStartIndex, sortEndIndex } = await getValues(
+          requestPathArr,
+          targetChildren.map((i) => i.key),
+          sortOptions,
+        )
+        // console.log(result, sortStartIndex, sortEndIndex)
+        if (result && JSON.stringify(result) !== '{}') {
+          result.forEach((item: any) => {
+            item && item.path && item.data && set(values.current, item.path, item.data)
+          })
+          // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
+          // 排序真是煞费苦心，555～
+          if (sortStartIndex !== -1) {
+            const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
+            let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
+            pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
+            const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
+            const sortLeftTreeFlatClone: any = []
+            for (let i = 0; i < pathKeys.length; i++) {
+              for (let j = 0; j < leftTreeFlatClone.length; j++) {
+                if (JSON.stringify(pathKeys[i]) === JSON.stringify(leftTreeFlatClone[j].path))
+                  sortLeftTreeFlatClone.push(leftTreeFlatClone[j])
+              }
             }
+            const sortLeftTreeClone = flatToTree(sortLeftTreeFlatClone)
+            setLeftTree(sortLeftTreeClone)
+            // console.log(sortLeftTreeClone)
           }
-          const sortLeftTreeClone = flatToTree(sortLeftTreeFlatClone)
-          setLeftTree(sortLeftTreeClone)
-          // console.log(sortLeftTreeClone)
+          // addDataDfs(leftTree, [], sortOrderTarget.current)
+          // sortDfs(leftTree, sortOrderTarget.current)
         }
-        // addDataDfs(leftTree, [], sortOrderTarget.current)
-        // sortDfs(leftTree, sortOrderTarget.current)
       }
+    } catch (error) {
+    } finally {
+      setValuesState({ ...values.current })
+      setIsLoading(false)
     }
-    setValuesState({ ...values.current })
-    setIsLoading(false)
   }
 
-  // 懒加载数据，根据展开的行配置和列配置
-  useEffect(() => {
-    // console.log(isOpenRow, isOpenCol)
-    if (isOpenCol || !isOpenRow) {
-      selectRowLastRequestKeys(rowExpandedList.map((i: ColExpandedListType) => i.value))
-    } else {
-      selectRowLastRequestKeys(rowLastRequestKeys)
-    }
-  }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, rowExpandedList, isOpenRow, isOpenCol, sortOrderTarget])
+  /**
+   * 初始化行列的配置
+   */
+  async function handleAsyncEffect() {
+    setIsLoading(true)
 
-  // 初始化列的展开配置
-  useEffect(() => {
-    // const len = expandKeys.colKeys.length
-
-    const topTreeClone = deepClone(topTree)
+    // 初始化列配置
     lastRequestKeys.length = 0
-    topTreeClone.forEach((item: any) => {
+    const topTreeConfig = await makeTopChildren(
+      'root',
+      dimensionList.col[0],
+      targetChildren.map((i) => i.key),
+    )
+    topTreeConfig.forEach((item: any) => {
       item.path = [item.key]
       item.expanded = false
       item.children.forEach((child: any) => {
@@ -188,10 +193,43 @@ export function useTreePlugin({
       item.render === undefined && lastRequestKeys.push(item.key)
     })
 
-    setTopTree([...topTreeClone])
+    // 初始化行配置
+    rowLastRequestKeys.length = 0
+    const leftTreeConfig = await makeLeftChildren('root', dimensionList.row[0])
+    leftTreeConfig.forEach((item: any) => {
+      item.path = [item.key]
+      rowLastRequestKeys.push(item.key)
+    })
+
+    // 外部个性化定制的函数treeInit
+    treeInit && (await treeInit(leftTreeConfig, topTreeConfig))
+
+    setTopTree([...topTreeConfig])
     setLastRequestKeys([...lastRequestKeys])
     setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
 
+    setLeftTree([...leftTreeConfig])
+    setRowLastRequestKeys([...rowLastRequestKeys])
+    setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+    setOpenCode('row')
+
+    setIsLoading(false)
+  }
+
+  // 懒加载数据，根据展开的行配置和列配置
+  useEffect(() => {
+    // console.log(isOpenRow, isOpenCol)
+    if (openCode === 'col') {
+      selectRowLastRequestKeys(rowExpandedList.map((i: ColExpandedListType) => i.value))
+    } else if (openCode === 'row') {
+      selectRowLastRequestKeys(rowLastRequestKeys)
+    }
+  }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, rowExpandedList, openCode, sortOrderTarget])
+
+  // 初始化行列的展开配置
+  useEffect(() => {
+    // const len = expandKeys.colKeys.length
+    handleAsyncEffect()
     // if (len > 0) {
     //   setTimeout(() => {
     //     expandKeys.colKeys.forEach((key: string) => {
@@ -199,31 +237,7 @@ export function useTreePlugin({
     //     })
     //   }, 0)
     // }
-  }, [])
-
-  // 初始化行的展开配置
-  useEffect(() => {
-    // const len = expandKeys.rowKeys.length
-
-    rowLastRequestKeys.length = 0
-    leftTree.forEach((item: any) => {
-      item.path = [item.key]
-      rowLastRequestKeys.push(item.key)
-    })
-
-    setLeftTree([...leftTree])
-    setRowLastRequestKeys([...rowLastRequestKeys])
-    setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
-
-    // if (len > 0) {
-    //   setTimeout(() => {
-    //     onChangeOpenKeys(expandKeys.rowKeys, expandKeys.rowKeys[len - 1], 'expand')
-    //   }, 0)
-    // }
-  }, [])
-
-  // 组件卸载时清除定时器
-  useEffect(() => {
+    // 组件卸载时清除定时器
     return () => {
       clearTimeout(clock)
     }
@@ -243,7 +257,7 @@ export function useTreePlugin({
     rowIndex: number,
     colIndex: number,
   ) => {
-    if (!leftNode.path || !topNode.path) return ''
+    if (!leftNode.path || !topNode.path) throw new Error('行列配置缺少path字段')
     const leftPath = leftNode.path
     const topPath = topNode.path
     if (topNode.render && typeof topNode.render === 'function') {
@@ -259,8 +273,13 @@ export function useTreePlugin({
         findFlag.current = false
       })
 
-      return topNode.render(pathArr.map((key: string) => `${temp.join('_')}|${key}`))
+      return topNode.render(
+        leftTree,
+        topTree,
+        pathArr.map((key: string) => `${temp.join('_')}|${key}`),
+      )
     }
+    if (topNode.data !== undefined) return topNode.data
     return get(valuesState, leftPath.concat(topPath), '')
   }
 
@@ -390,7 +409,7 @@ export function useTreePlugin({
               return !item.path.includes(i.key)
             })
             // parentPath = colExpandedList[0].key
-            openCol = false
+            openCol = 'none'
             lastRequestKeys.push(i.key)
             // console.log(colExpandedList, lastRequestKeys)
           } else {
@@ -399,7 +418,11 @@ export function useTreePlugin({
               else openKey = i.key
               return item.value !== i.key
             })
-            children = await makeTopChildren(key)
+            children = await makeTopChildren(
+              key,
+              dimensionList.col[dimensionList.col.indexOf(i.dimension) + 1],
+              targetChildren.map((i) => i.key),
+            )
             children.unshift({
               key: i.key,
               value: i.totalField ?? '总计',
@@ -419,7 +442,7 @@ export function useTreePlugin({
                 item.path = [...child.path, item.key]
               })
             })
-            openCol = true
+            openCol = 'col'
           }
           i.expanded = !i.expanded
         } else {
@@ -428,7 +451,7 @@ export function useTreePlugin({
       }
     }
 
-    let openCol = isOpenCol
+    let openCol = openCode
     let children: any[] = []
     let parentPath: string[] = ['root']
     let openKey: string
@@ -441,7 +464,7 @@ export function useTreePlugin({
 
     // requestPathArr.current.length = 0
     setTopTree([...topTreeClone])
-    setIsOpenCol(openCol)
+    setOpenCode(openCol)
     // console.log(topTreeClone)
     setColExpandedList(colExpandedListBoth)
     setLastRequestKeys([...lastRequestKeys])
@@ -453,7 +476,7 @@ export function useTreePlugin({
       for (const i of leftTree) {
         if (i.key === key) {
           if (action === 'expand') {
-            children = await makeLeftChildren(key)
+            children = await makeLeftChildren(key, dimensionList.row[dimensionList.row.indexOf(i.dimension) + 1])
             i.children = deepClone(children)
             i.children.forEach((child: any) => {
               const childKey = child.key
@@ -464,7 +487,7 @@ export function useTreePlugin({
               if (item.value === i.key) parentPath = item.path
               else openKey = i.key
             })
-            openRow = true
+            openRow = 'row'
           } else {
             i.children.length = 0
             // todo: ⚠️行收起时行的请求的路径终点keys也要改变
@@ -474,7 +497,7 @@ export function useTreePlugin({
               return !item.path.includes(i.key)
             })
             // rowLastRequestKeys = [i.key]
-            openRow = false
+            openRow = 'none'
           }
         } else {
           await dfs(i.children)
@@ -482,7 +505,7 @@ export function useTreePlugin({
       }
     }
 
-    let openRow = isOpenRow
+    let openRow = openCode
     let children: any[] = []
     let parentPath: string[] = ['root']
     let openKey: string
@@ -498,7 +521,7 @@ export function useTreePlugin({
     // 列展开暂时不需要记录leftTree的buffer
     // leftTreeBuffer.current = JSON.parse(JSON.stringify(leftTree))
     setLeftTree([...leftTree])
-    setIsOpenRow(openRow)
+    setOpenCode(openRow)
     // console.log(rowExpandedListBoth)
     setRowExpandedList(rowExpandedListBoth)
     setRowLastRequestKeys([...rowLastRequestKeys])
@@ -517,8 +540,8 @@ export function useTreePlugin({
       isLoading,
       sortColIndex: sortColIndex.current,
     },
+    setIsLoading,
     setLeftTree,
     setTopTree,
-    setIsLoading,
   }
 }

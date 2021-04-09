@@ -16,28 +16,7 @@ import { Dropdown, Menu } from '@alifd/next'
 import { icons } from '../../ali-react-table/src/common-views'
 import * as fusion from '@alifd/next'
 
-const leftTreeConfig: LeftCrossTreeNode[] = [
-  {
-    key: 'forenoon',
-    value: '上午',
-    isLeaf: false,
-    children: [] as any[],
-  },
-  {
-    key: 'afternoon',
-    value: '下午',
-    isLeaf: false,
-    children: [] as any[],
-  },
-  {
-    key: 'evening',
-    value: '晚上',
-    isLeaf: false,
-    children: [] as any[],
-  },
-]
-
-const targetChildren = [
+const targetChildrenConfig = [
   {
     key: '目标收入',
     value: '目标收入',
@@ -49,187 +28,23 @@ const targetChildren = [
     key: '实际收入',
     value: '实际收入',
     isLeaf: true,
-    children: [] as any[],
+    children: [],
     sortable: true,
   },
   {
     key: '目标达成率',
     value: '目标达成率',
     isLeaf: true,
-    children: [] as any[],
+    children: [],
     sortable: true,
   },
   {
     key: '收入月环比',
     value: '收入月环比',
     isLeaf: true,
-    children: [] as any[],
+    children: [],
     sortable: true,
   },
-]
-
-const topTreeConfig: TopCrossTreeNode[] = [
-  {
-    key: '上半年',
-    value: '上半年',
-    isLeaf: false,
-    children: targetChildren,
-    totalField: '所有月份',
-  },
-  {
-    key: '下半年',
-    value: '下半年',
-    isLeaf: false,
-    children: targetChildren,
-    totalField: '所有月份',
-  },
-]
-
-// 模拟请求树状列children的方法
-const makeTopChildren = async (keyPrefix: string): Promise<TopCrossTreeNode[]> => {
-  if (keyPrefix === '上半年') {
-    return [
-      {
-        key: '2020-01',
-        value: '2020-01',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-02',
-        value: '2020-02',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-03',
-        value: '2020-03',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-04',
-        value: '2020-04',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-05',
-        value: '2020-05',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-06',
-        value: '2020-06',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-    ]
-  } else if (
-    [
-      '2020-01',
-      '2020-02',
-      '2020-03',
-      '2020-04',
-      '2020-05',
-      '2020-06',
-      '2020-07',
-      '2020-08',
-      '2020-09',
-      '2020-10',
-      '2020-11',
-      '2020-12',
-    ].includes(keyPrefix)
-  ) {
-    return [
-      {
-        key: `${keyPrefix}-week-0`,
-        value: '第一周',
-        // data: '12%',
-        isLeaf: true,
-        children: targetChildren,
-      },
-      {
-        key: `${keyPrefix}-week-1`,
-        value: '第二周',
-        // data: '24%',
-        isLeaf: true,
-        children: targetChildren,
-      },
-      {
-        key: `${keyPrefix}-week-2`,
-        value: '第三周',
-        // data: '36%',
-        isLeaf: true,
-        children: targetChildren,
-      },
-      {
-        key: `${keyPrefix}-week-3`,
-        value: '第四周',
-        // data: '48%',
-        isLeaf: true,
-        children: targetChildren,
-      },
-    ]
-  } else if (keyPrefix === '下半年') {
-    return [
-      {
-        key: '2020-07',
-        value: '2020-07',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-08',
-        value: '2020-08',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-09',
-        value: '2020-09',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-10',
-        value: '2020-10',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-11',
-        value: '2020-11',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-      {
-        key: '2020-12',
-        value: '2020-12',
-        children: targetChildren,
-        isLeaf: false,
-        totalField: '所有周',
-      },
-    ]
-  }
-}
-
-const makeLeftChildren = async (key: string): Promise<LeftCrossTreeNode[]> => [
-  { key: `${key}-9`, value: '9:00-10:00', isLeaf: true, children: [] as any[] },
-  { key: `${key}-10`, value: '10:00-11:00', isLeaf: true, children: [] },
-  { key: `${key}-11`, value: '11:00-12:00', isLeaf: true, children: [] },
 ]
 
 // const expandKeys = {
@@ -265,17 +80,17 @@ const OperationsDiv = styled.div`
 
 function App() {
   /** CrossTreeTable示例 */
-  function handleDelete(path: string[]) {
+  function handleDelete(leftTree: LeftCrossTreeNode[], path: string[]) {
     // console.log(path)
     setIsLoading(true)
     const leftPath = path[0]
       .split('|')[0]
       .split('_')
       .map((j: string) => j.split(':')[1])
-    console.log(treePlugin.leftTree)
-    // const leftTreeClone = deepClone(leftTree)
-    dfs(treePlugin.leftTree)
-    setLeftTree([...treePlugin.leftTree])
+    const leftTreeClone = deepClone(leftTree)
+    dfs(leftTreeClone)
+    console.log(leftTreeClone)
+    setLeftTree(leftTreeClone)
     setIsLoading(false)
 
     function dfs(leftTreeClone: LeftCrossTreeNode[]) {
@@ -291,7 +106,7 @@ function App() {
     }
   }
 
-  function renderOptions(path: string[]) {
+  function renderOptions(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]) {
     return (
       <OperationsDiv>
         <div className="item" onClick={() => {}}>
@@ -301,7 +116,7 @@ function App() {
         <div
           className="item danger"
           onClick={() => {
-            handleDelete(path)
+            handleDelete(leftTree, path)
           }}
         >
           删除
@@ -327,31 +142,90 @@ function App() {
     )
   }
 
-  // 维度层级必须按照数组顺序依次排列
-  const [dimensionList, setDimensionList] = useState({ row: ['noon', 'time'], col: ['year', 'month', 'week'] })
+  // function bfs(tree: any[]) {
+  //   const stack = deepClone(tree)
+  //   const target = []
+  //   while (stack.length) {
+  //     const node = stack.shift()
+  //     node.dimension && target.push(node.dimension)
+  //     if (node.children && node.children.length) {
+  //       stack.push(...node.children)
+  //     }
+  //   }
+  //   return target
+  // }
 
-  useEffect(() => {
-    // const topTreeClone = deepClone(topTree)
-    treePlugin.topTree.push({
+  // function getDimensionList(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]) {
+  //   const row = bfs(leftTree)
+  //   const col = bfs(topTree)
+  //   return {
+  //     row,
+  //     col,
+  //   }
+  // }
+
+  function addTargetChildren(topTree: TopCrossTreeNode[]) {
+    topTree.forEach((i) => {
+      if (i.children && i.children.length) {
+        addTargetChildren(i.children)
+      } else {
+        i.children = deepClone(targetChildrenConfig)
+      }
+    })
+  }
+
+  // 模拟请求树状列children的方法
+  const makeTopChildren = async (
+    keyPrefix: string,
+    dimension: string,
+    targetKeys: string[],
+  ): Promise<TopCrossTreeNode[]> => {
+    const encodeKeyPrefix = encodeURIComponent(keyPrefix)
+    const encodeDimension = encodeURIComponent(dimension)
+    const encodeTargetKeys = encodeURIComponent(JSON.stringify(targetKeys))
+    const res = await fetch(
+      `http://localhost:3002/get_top_tree?keyPrefix=${encodeKeyPrefix}&dimension=${encodeDimension}&targetKeys=${encodeTargetKeys}`,
+    ).then((res) => res.json())
+    const data = res.data
+    addTargetChildren(data)
+    return data
+  }
+
+  // 模拟请求树状行children的方法
+  const makeLeftChildren = async (keyPrefix: string, dimension: string): Promise<LeftCrossTreeNode[]> => {
+    const encodeKeyPrefix = encodeURIComponent(keyPrefix)
+    const encodeDimension = encodeURIComponent(dimension)
+    const data = await fetch(
+      `http://localhost:3002/get_left_tree?keyPrefix=${encodeKeyPrefix}&dimension=${encodeDimension}`,
+    ).then((res) => res.json())
+    return data.data
+  }
+
+  async function treeInit(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]) {
+    topTree.push({
       key: 'operation',
       lock: true,
       width: 200,
       value: '操作',
       isLeaf: true,
+      data: 12,
       render: renderOptions,
       children: [],
+      path: ['operation'],
     })
-    // setTopTree(topTree)
-  }, [])
+  }
+
+  // 维度层级必须按照数组顺序依次排列
+  const [dimensionList, setDimensionList] = useState({ row: ['noon', 'time'], col: ['year', 'month', 'week'] })
+  const [targetChildren, setTargetChildren] = useState(targetChildrenConfig)
 
   const { treePlugin, setIsLoading, setLeftTree, setTopTree } = useTreePlugin({
-    leftTreeConfig,
-    topTreeConfig,
     makeTopChildren,
     makeLeftChildren,
     targetChildren,
     getValues,
     dimensionList,
+    treeInit,
   })
 
   return (

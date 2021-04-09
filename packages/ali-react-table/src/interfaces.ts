@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react'
+import { LeftCrossTreeNode, TopCrossTreeNode } from './pivot/cross-table'
 
 export type ArtColumnAlign = 'left' | 'center' | 'right'
 
@@ -57,6 +58,7 @@ export interface ArtColumn extends ArtColumnStaticPart, ArtColumnDynamicPart {
   children?: ArtColumn[]
   isLeaf?: boolean
   expanded?: boolean
+  renderFun?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]): ReactNode
 }
 
 /** SpanRect 用于描述合并单元格的边界

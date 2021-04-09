@@ -1,8 +1,8 @@
 import { TreePluginValue } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
-import get from 'lodash/get'
-import set from 'lodash/set'
-import has from 'lodash/has'
+import get from 'lodash.get'
+import set from 'lodash.set'
+import has from 'lodash.has'
 // import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
 import { treeToFlat, flatToTree, getPath, deepClone, getTreeMinDepth } from '../utils'
@@ -260,7 +260,7 @@ export function useTreePlugin({
     if (!leftNode.path || !topNode.path) throw new Error('行列配置缺少path字段')
     const leftPath = leftNode.path
     const topPath = topNode.path
-    if (topNode.render && typeof topNode.render === 'function') {
+    if (topNode.renderFun && typeof topNode.renderFun === 'function') {
       const temp = leftPath.map((key: string, index: number) => `${dimensionList.row[index]}:${key}`)
       const keyArr = colExpandedList.map((item: ColExpandedListType) => item.value)
       const pathArr: string[] = []
@@ -273,7 +273,7 @@ export function useTreePlugin({
         findFlag.current = false
       })
 
-      return topNode.render(
+      return topNode.renderFun(
         leftTree,
         topTree,
         pathArr.map((key: string) => `${temp.join('_')}|${key}`),

@@ -209,7 +209,7 @@ function App() {
       value: '操作',
       isLeaf: true,
       data: 12,
-      render: renderOptions,
+      renderFun: renderOptions,
       children: [],
       path: ['operation'],
     })

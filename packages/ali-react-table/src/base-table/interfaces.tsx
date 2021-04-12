@@ -1,6 +1,6 @@
 import React from 'react'
-import { ArtColumn, SortOrder } from '../interfaces'
-import { LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
+import { ArtColumn, SortItem, SortOrder } from '../interfaces'
+import { IndicatorNode } from '../pivot/cross-table'
 
 export type VirtualEnum = false | true | 'auto'
 
@@ -60,16 +60,13 @@ export interface SortOptions {
   sortOrder: SortOrder
 }
 
-export interface TreePluginValue {
-  getValues(requestPathArr: string[], targets: string[], sortOptions: SortOptions): Promise<any>
-  openKeys?: string[]
-  targetChildren?: any[]
-  makeTopChildren?(keyPrefix: string, dimension: string, targetKeys: string[]): Promise<TopCrossTreeNode[]>
-  makeLeftChildren?(keyPrefix: string, dimension: string): Promise<LeftCrossTreeNode[]>
-  isLeafNode?(node: any, nodeMeta: any): boolean
-  expandKeys?: { rowKeys: string[]; colKeys: string[] }
-  dimensionList: { row: string[]; col: string[] }
-  treeInit?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]): Promise<void>
+export interface TreePluginSource {
+  indicatorList: IndicatorNode[]
+  dimensionMap: { row: string[]; col: string[] }
+  topDimensionTreeUrl: string
+  leftDimensionTreeUrl: string
+  valuesUrl: string
+  onSort?(colIndex: number, sortOrder: SortItem): void
 }
 
 // pipeline的plugins对象结构

@@ -43,3 +43,8 @@ export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPar
   path?: string[]
   renderFun?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]): ReactNode
 }
+
+// 描述指标数组indicatorList
+export interface IndicatorNode extends CrossTreeNode {
+  sortable: boolean
+}

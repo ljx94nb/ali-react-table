@@ -7,4 +7,5 @@ export {
   LeftCrossTreeNode,
   TopCrossTreeNode,
   CrossTableIndicator,
+  IndicatorNode,
 } from './interfaces'

@@ -1,4 +1,4 @@
-import { TreePluginValue } from '../base-table/interfaces'
+import { TreePluginSource } from '../base-table/interfaces'
 import { useEffect, useRef, useState } from 'react'
 import get from 'lodash.get'
 import set from 'lodash.set'
@@ -7,6 +7,7 @@ import has from 'lodash.has'
 import { SortItem, SortOrder } from '../interfaces'
 import { treeToFlat, flatToTree, getPath, deepClone, getTreeMinDepth } from '../utils'
 import { LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
+import { getValues, makeLeftChildren, makeTopChildren, updateTargetChildren } from '../api/tableCellConfig'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -16,15 +17,7 @@ interface ColExpandedListType {
 
 type OpenCode = 'row' | 'col' | 'none'
 
-export function useTreePlugin({
-  makeTopChildren,
-  makeLeftChildren,
-  targetChildren,
-  expandKeys,
-  getValues,
-  dimensionList,
-  treeInit,
-}: TreePluginValue) {
+export function useTreePlugin(treePluginSource: TreePluginSource) {
   const [leftTree, setLeftTree] = useState<LeftCrossTreeNode[]>([])
   const [topTree, setTopTree] = useState<TopCrossTreeNode[]>([])
   const [openKeys, setOpenKeys] = useState([])
@@ -55,6 +48,8 @@ export function useTreePlugin({
   // 存储请求路径的数组，方便一次请求后端
   const requestPathSet = useRef<Set<string>>(new Set())
   const requestPathArr = useRef<string[]>([])
+
+  const { indicatorList, dimensionMap, topDimensionTreeUrl, leftDimensionTreeUrl, valuesUrl, onSort } = treePluginSource
   // 定时器
   let clock: NodeJS.Timeout = null
 
@@ -79,7 +74,7 @@ export function useTreePlugin({
       const topPath = findRequestPath([{ key: 'root', children: topTree }], lastRequestKeys[colIndex])
       topPath.splice(topPath.indexOf('root'), 1)
       for (let i = 0, len = topPath.length; i < len; i++) {
-        topPath[i] = `${dimensionList.col[i]}:${topPath[i]}`
+        topPath[i] = `${dimensionMap.col[i]}:${topPath[i]}`
       }
       findFlag.current = false
 
@@ -107,7 +102,7 @@ export function useTreePlugin({
       const leftPath = findRequestPath([{ key: 'root', children: leftTree }], rowKey)
       leftPath.splice(leftPath.indexOf('root'), 1)
       for (let i = 0, len = leftPath.length; i < len; i++) {
-        leftPath[i] = `${dimensionList.row[i]}:${leftPath[i]}`
+        leftPath[i] = `${dimensionMap.row[i]}:${leftPath[i]}`
       }
       findFlag.current = false
       if (openCode === 'row') {
@@ -129,23 +124,23 @@ export function useTreePlugin({
   async function requestData(requestPathArr: string[]) {
     try {
       if (requestPathArr.length) {
-        console.log(requestPathArr)
         setIsLoading(true)
-        const sortOptions = getSortOptions(sortOrderTarget)
-        const { result, sortStartIndex, sortEndIndex } = await getValues(
+        const sortOptionsMap = getSortOptions(sortOrderTarget)
+        const { data, sortStartIndex, sortEndIndex } = await getValues(
+          valuesUrl,
           requestPathArr,
-          targetChildren.map((i) => i.key),
-          sortOptions,
+          indicatorList.map((i) => i.key),
+          sortOptionsMap,
         )
-        // console.log(result, sortStartIndex, sortEndIndex)
-        if (result && JSON.stringify(result) !== '{}') {
-          result.forEach((item: any) => {
+        // console.log(data, sortStartIndex, sortEndIndex)
+        if (data && JSON.stringify(data) !== '{}') {
+          data.forEach((item: any) => {
             item && item.path && item.data && set(values.current, item.path, item.data)
           })
           // 排序逻辑：先利用扁平化的结构排序leftTree，最后还原成Tree。⚠️扁平化必须是深度优先遍历，否则会造成顺序紊乱
           // 排序真是煞费苦心，555～
           if (sortStartIndex !== -1) {
-            const sortPart = result.slice(sortStartIndex, sortEndIndex + 1)
+            const sortPart = data.slice(sortStartIndex, sortEndIndex + 1)
             let pathKeys = sortPart.map((item: any) => item.pathKey.split('|')[0].split('_'))
             pathKeys = pathKeys.map((item: string[]) => item.map((key: string) => key.split(':')[1]))
             const leftTreeFlatClone = treeToFlat(deepClone(leftTree)).flatList
@@ -165,6 +160,7 @@ export function useTreePlugin({
         }
       }
     } catch (error) {
+      console.error(error)
     } finally {
       setValuesState({ ...values.current })
       setIsLoading(false)
@@ -176,45 +172,55 @@ export function useTreePlugin({
    */
   async function handleAsyncEffect() {
     setIsLoading(true)
-
-    // 初始化列配置
-    lastRequestKeys.length = 0
-    const topTreeConfig = await makeTopChildren(
-      'root',
-      dimensionList.col[0],
-      targetChildren.map((i) => i.key),
-    )
-    topTreeConfig.forEach((item: any) => {
-      item.path = [item.key]
-      item.expanded = false
-      item.children.forEach((child: any) => {
-        child.path = [...item.path, child.key]
+    try {
+      // 初始化列配置
+      lastRequestKeys.length = 0
+      const topTreeConfig = await makeTopChildren(topDimensionTreeUrl, 'root', dimensionMap.col[0], indicatorList)
+      topTreeConfig.forEach((item: any) => {
+        item.path = [item.key]
+        item.expanded = false
+        item.children.forEach((child: any) => {
+          child.path = [...item.path, child.key]
+        })
+        item.render === undefined && lastRequestKeys.push(item.key)
       })
-      item.render === undefined && lastRequestKeys.push(item.key)
-    })
 
-    // 初始化行配置
-    rowLastRequestKeys.length = 0
-    const leftTreeConfig = await makeLeftChildren('root', dimensionList.row[0])
-    leftTreeConfig.forEach((item: any) => {
-      item.path = [item.key]
-      rowLastRequestKeys.push(item.key)
-    })
+      // 初始化行配置
+      rowLastRequestKeys.length = 0
+      const leftTreeConfig = await makeLeftChildren(leftDimensionTreeUrl, 'root', dimensionMap.row[0])
+      leftTreeConfig.forEach((item: any) => {
+        item.path = [item.key]
+        rowLastRequestKeys.push(item.key)
+      })
 
-    // 外部个性化定制的函数treeInit
-    treeInit && (await treeInit(leftTreeConfig, topTreeConfig))
+      // 外部个性化定制的函数treeInit
+      // treeInit && (await treeInit(leftTreeConfig, topTreeConfig))
 
-    setTopTree([...topTreeConfig])
-    setLastRequestKeys([...lastRequestKeys])
-    setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+      setTopTree([...topTreeConfig])
+      setLastRequestKeys([...lastRequestKeys])
+      setColExpandedList(lastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
 
-    setLeftTree([...leftTreeConfig])
-    setRowLastRequestKeys([...rowLastRequestKeys])
-    setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
-    setOpenCode('row')
-
+      setLeftTree([...leftTreeConfig])
+      setRowLastRequestKeys([...rowLastRequestKeys])
+      setRowExpandedList(rowLastRequestKeys.map((key: string) => ({ path: ['root'], value: key })))
+      setOpenCode('row')
+    } catch (error) {
+      console.error('行列配置初始化失败')
+    }
     setIsLoading(false)
   }
+
+  // 当indicatorList发生变化时，更新topTree
+  useEffect(() => {
+    setIsLoading(true)
+    const topTreeClone = deepClone(topTree)
+    updateTargetChildren(
+      topTreeClone,
+      indicatorList.map((i) => i.key),
+    )
+    setTopTree(topTreeClone)
+    setIsLoading(false)
+  }, [indicatorList])
 
   // 懒加载数据，根据展开的行配置和列配置
   useEffect(() => {
@@ -261,14 +267,14 @@ export function useTreePlugin({
     const leftPath = leftNode.path
     const topPath = topNode.path
     if (topNode.renderFun && typeof topNode.renderFun === 'function') {
-      const temp = leftPath.map((key: string, index: number) => `${dimensionList.row[index]}:${key}`)
+      const temp = leftPath.map((key: string, index: number) => `${dimensionMap.row[index]}:${key}`)
       const keyArr = colExpandedList.map((item: ColExpandedListType) => item.value)
       const pathArr: string[] = []
 
       keyArr.forEach((key: string) => {
         let path = findRequestPath([{ key: 'root', children: topTree }], key)
         path.shift()
-        path = path.map((item: string, index: number) => `${dimensionList.col[index]}:${item}`)
+        path = path.map((item: string, index: number) => `${dimensionMap.col[index]}:${item}`)
         pathArr.push(path.join('_'))
         findFlag.current = false
       })
@@ -326,7 +332,7 @@ export function useTreePlugin({
    * 获取leftTree的所有keys的路径
    * @returns pathArr = ["noon:forenoon", "noon:forenoon_time:forenoon-9", "noon:forenoon_time:forenoon-10", "noon:forenoon_time:forenoon-11", "noon:afternoon", "noon:evening"]
    *  */
-  function getLeftTreeKeys(leftTree: any[], dimensionList: string[], deepth = Infinity) {
+  function getLeftTreeKeys(leftTree: any[], dimensionMap: string[], deepth = Infinity) {
     function dfs(leftTree: any[], deep: number) {
       deep += 1
       leftTree.forEach((item: any) => {
@@ -345,7 +351,7 @@ export function useTreePlugin({
         !findFlag.current && getPath(item, key, tempArr, findFlag)
       })
       findFlag.current = false
-      tempArr = tempArr.map((item: string, index: number) => `${dimensionList[index]}:${item}`)
+      tempArr = tempArr.map((item: string, index: number) => `${dimensionMap[index]}:${item}`)
       pathArr.push(tempArr.join('_'))
     })
     return pathArr
@@ -354,10 +360,10 @@ export function useTreePlugin({
   // 获取排序请求的options：rowSortKeys、targetKey、sortOrder
   function getSortOptions(sortOrder: SortItem) {
     if (sortOrder.code !== '' && sortOrder.order !== 'none') {
-      let rowSortKeys = getLeftTreeKeys(leftTree, dimensionList.row)
+      let rowSortKeys = getLeftTreeKeys(leftTree, dimensionMap.row)
       let sortCodePath = JSON.parse(sortOrder.code)
       const targetKey = sortCodePath.pop()
-      sortCodePath = sortCodePath.map((item: string, index: number) => `${dimensionList.col[index]}:${item}`)
+      sortCodePath = sortCodePath.map((item: string, index: number) => `${dimensionMap.col[index]}:${item}`)
       rowSortKeys = rowSortKeys.map((key: string) => `${key}|${sortCodePath.join('_')}`)
       // const leftTreeSortConfig = await getSortCol(rowSortKeys, targetKey, sortOrder.order)
       // setLeftTree(JSON.parse(JSON.stringify(leftTreeSortConfig)))
@@ -387,6 +393,8 @@ export function useTreePlugin({
     // )
     // 后端排序的逻辑：请求后端排序接口
     sortColIndex.current = sortOrder.order === 'none' ? -1 : colIndex
+    // sort的回调
+    onSort && onSort(colIndex, sortOrder)
     // requestPathArr.current.length = 0
     setSortOrderTarget({ ...sortOrder })
     // getSortOptions(sortOrder)
@@ -399,7 +407,7 @@ export function useTreePlugin({
         if (i.key === key) {
           if (i.expanded) {
             // const childrenLen = i.children.length
-            i.children = deepClone(targetChildren)
+            i.children = deepClone(indicatorList)
             i.children.forEach((child: any) => {
               child.path = [...i.path, child.key]
             })
@@ -419,14 +427,15 @@ export function useTreePlugin({
               return item.value !== i.key
             })
             children = await makeTopChildren(
+              topDimensionTreeUrl,
               key,
-              dimensionList.col[dimensionList.col.indexOf(i.dimension) + 1],
-              targetChildren.map((i) => i.key),
+              dimensionMap.col[dimensionMap.col.indexOf(i.dimension) + 1],
+              indicatorList,
             )
             children.unshift({
               key: i.key,
               value: i.totalField ?? '总计',
-              children: targetChildren,
+              children: indicatorList,
               isLeaf: true,
             })
             i.children = deepClone(children)
@@ -476,7 +485,11 @@ export function useTreePlugin({
       for (const i of leftTree) {
         if (i.key === key) {
           if (action === 'expand') {
-            children = await makeLeftChildren(key, dimensionList.row[dimensionList.row.indexOf(i.dimension) + 1])
+            children = await makeLeftChildren(
+              leftDimensionTreeUrl,
+              key,
+              dimensionMap.row[dimensionMap.row.indexOf(i.dimension) + 1],
+            )
             i.children = deepClone(children)
             i.children.forEach((child: any) => {
               const childKey = child.key

@@ -6,141 +6,109 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { BaseTable, useTreePlugin, useTablePipeline, features, ArtColumn, deepClone } from 'ali-react-table'
-import { CrossTreeTable, TopCrossTreeNode, LeftCrossTreeNode } from 'ali-react-table/pivot'
-import _ from 'lodash'
-import { getValues } from './mock/tableCellConfig'
-import { format, cdnData } from '../../website/src/assets'
-import styled from 'styled-components'
-import { Dropdown, Menu } from '@alifd/next'
-import { icons } from '../../ali-react-table/src/common-views'
-import * as fusion from '@alifd/next'
-
-const targetChildrenConfig = [
-  {
-    key: '目标收入',
-    value: '目标收入',
-    isLeaf: true,
-    children: [] as any[],
-    sortable: true,
-  },
-  {
-    key: '实际收入',
-    value: '实际收入',
-    isLeaf: true,
-    children: [],
-    sortable: true,
-  },
-  {
-    key: '目标达成率',
-    value: '目标达成率',
-    isLeaf: true,
-    children: [],
-    sortable: true,
-  },
-  {
-    key: '收入月环比',
-    value: '收入月环比',
-    isLeaf: true,
-    children: [],
-    sortable: true,
-  },
-]
+import { BaseTable, useTreePlugin, deepClone, TreePluginValue } from 'ali-react-table'
+import { CrossTreeTable } from 'ali-react-table/pivot'
+// import _ from 'lodash'
+// import { format, cdnData } from '../../website/src/assets'
+// import styled from 'styled-components'
+// import { Dropdown, Menu } from '@alifd/next'
+// import { icons } from '../../ali-react-table/src/common-views'
+// import * as fusion from '@alifd/next'
 
 // const expandKeys = {
 //   rowKeys: ['forenoon'] as string[],
 //   colKeys: ['上半年'] as string[],
 // }
 
-const OperationsDiv = styled.div`
-  display: flex;
-  height: 20px;
-  align-items: center;
+// const OperationsDiv = styled.div`
+//   display: flex;
+//   height: 20px;
+//   align-items: center;
 
-  .item {
-    height: 20px;
-    cursor: pointer;
-    color: #3858cf;
-    display: flex;
-    align-items: center;
+//   .item {
+//     height: 20px;
+//     cursor: pointer;
+//     color: #3858cf;
+//     display: flex;
+//     align-items: center;
 
-    &.danger {
-      color: #eb4141;
-    }
-  }
+//     &.danger {
+//       color: #eb4141;
+//     }
+//   }
 
-  .sep {
-    height: 10px;
-    width: 1px;
-    margin-left: 12px;
-    margin-right: 12px;
-    background: #eeeeee;
-  }
-`
+//   .sep {
+//     height: 10px;
+//     width: 1px;
+//     margin-left: 12px;
+//     margin-right: 12px;
+//     background: #eeeeee;
+//   }
+// `
 
 function App() {
   /** CrossTreeTable示例 */
-  function handleDelete(leftTree: LeftCrossTreeNode[], path: string[]) {
-    // console.log(path)
-    setIsLoading(true)
-    const leftPath = path[0]
-      .split('|')[0]
-      .split('_')
-      .map((j: string) => j.split(':')[1])
-    const leftTreeClone = deepClone(leftTree)
-    dfs(leftTreeClone)
-    console.log(leftTreeClone)
-    setLeftTree(leftTreeClone)
-    setIsLoading(false)
+  // function handleDelete(leftTree: LeftCrossTreeNode[], path: string[]) {
+  //   // console.log(path)
+  //   setIsLoading(true)
+  //   const leftPath = path[0]
+  //     .split('|')[0]
+  //     .split('_')
+  //     .map((j: string) => j.split(':')[1])
+  //   const leftTreeClone = deepClone(leftTree)
+  //   dfs(leftTreeClone)
+  //   console.log(leftTreeClone)
+  //   setLeftTree(leftTreeClone)
+  //   setIsLoading(false)
 
-    function dfs(leftTreeClone: LeftCrossTreeNode[]) {
-      leftTreeClone.forEach((item: LeftCrossTreeNode, index: number) => {
-        if (JSON.stringify(item.path) === JSON.stringify(leftPath)) {
-          leftTreeClone.splice(index, 1)
-          return
-        }
-        if (item.children && item.children.length) {
-          dfs(item.children)
-        }
-      })
-    }
-  }
+  //   function dfs(leftTreeClone: LeftCrossTreeNode[]) {
+  //     leftTreeClone.forEach((item: LeftCrossTreeNode, index: number) => {
+  //       if (JSON.stringify(item.path) === JSON.stringify(leftPath)) {
+  //         leftTreeClone.splice(index, 1)
+  //         return
+  //       }
+  //       if (item.children && item.children.length) {
+  //         dfs(item.children)
+  //       }
+  //     })
+  //   }
+  // }
 
-  function renderOptions(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]) {
-    return (
-      <OperationsDiv>
-        <div className="item" onClick={() => {}}>
-          编辑
-        </div>
-        <div className="sep" />
-        <div
-          className="item danger"
-          onClick={() => {
-            handleDelete(leftTree, path)
-          }}
-        >
-          删除
-        </div>
-        <div className="sep" />
-        {/* <Dropdown
-        trigger={
-          <div className="item">
-            更多
-            <icons.CaretDown style={{ color: '#A6A6A6' }} />
-          </div>
-        }
-        triggerType="click"
-      >
-        <Menu>
-          <Menu.Item>Option 1</Menu.Item>
-          <Menu.Item>Option 2</Menu.Item>
-          <Menu.Item>Option 3</Menu.Item>
-          <Menu.Item>Option 4</Menu.Item>
-        </Menu>
-      </Dropdown> */}
-      </OperationsDiv>
-    )
-  }
+  // function renderOptions(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]) {
+  //   return (
+  //     <OperationsDiv>
+  //       <div className="item" onClick={() => {}}>
+  //         编辑
+  //       </div>
+  //       <div className="sep" />
+  //       <div
+  //         className="item danger"
+  //         onClick={() => {
+  //           handleDelete(leftTree, path)
+  //         }}
+  //       >
+  //         删除
+  //       </div>
+  //       <div className="sep" />
+  //       {/* <Dropdown
+  //       trigger={
+  //         <div className="item">
+  //           更多
+  //           <icons.CaretDown style={{ color: '#A6A6A6' }} />
+  //         </div>
+  //       }
+  //       triggerType="click"
+  //     >
+  //       <Menu>
+  //         <Menu.Item>Option 1</Menu.Item>
+  //         <Menu.Item>Option 2</Menu.Item>
+  //         <Menu.Item>Option 3</Menu.Item>
+  //         <Menu.Item>Option 4</Menu.Item>
+  //       </Menu>
+  //     </Dropdown> */}
+  //     </OperationsDiv>
+  //   )
+  // }
 
   // function bfs(tree: any[]) {
   //   const stack = deepClone(tree)
@@ -164,69 +132,64 @@ function App() {
   //   }
   // }
 
-  function addTargetChildren(topTree: TopCrossTreeNode[]) {
-    topTree.forEach((i) => {
-      if (i.children && i.children.length) {
-        addTargetChildren(i.children)
-      } else {
-        i.children = deepClone(targetChildrenConfig)
-      }
-    })
-  }
-
-  // 模拟请求树状列children的方法
-  const makeTopChildren = async (
-    keyPrefix: string,
-    dimension: string,
-    targetKeys: string[],
-  ): Promise<TopCrossTreeNode[]> => {
-    const encodeKeyPrefix = encodeURIComponent(keyPrefix)
-    const encodeDimension = encodeURIComponent(dimension)
-    const encodeTargetKeys = encodeURIComponent(JSON.stringify(targetKeys))
-    const res = await fetch(
-      `http://localhost:3002/get_top_tree?keyPrefix=${encodeKeyPrefix}&dimension=${encodeDimension}&targetKeys=${encodeTargetKeys}`,
-    ).then((res) => res.json())
-    const data = res.data
-    addTargetChildren(data)
-    return data
-  }
-
-  // 模拟请求树状行children的方法
-  const makeLeftChildren = async (keyPrefix: string, dimension: string): Promise<LeftCrossTreeNode[]> => {
-    const encodeKeyPrefix = encodeURIComponent(keyPrefix)
-    const encodeDimension = encodeURIComponent(dimension)
-    const data = await fetch(
-      `http://localhost:3002/get_left_tree?keyPrefix=${encodeKeyPrefix}&dimension=${encodeDimension}`,
-    ).then((res) => res.json())
-    return data.data
-  }
-
-  async function treeInit(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]) {
-    topTree.push({
-      key: 'operation',
-      lock: true,
-      width: 200,
-      value: '操作',
-      isLeaf: true,
-      data: 12,
-      renderFun: renderOptions,
-      children: [],
-      path: ['operation'],
-    })
-  }
+  // async function treeInit(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[]) {
+  //   topTree.push({
+  //     key: 'operation',
+  //     lock: true,
+  //     width: 200,
+  //     value: '操作',
+  //     isLeaf: true,
+  //     data: 12,
+  //     renderFun: renderOptions,
+  //     children: [],
+  //     path: ['operation'],
+  //   })
+  // }
 
   // 维度层级必须按照数组顺序依次排列
-  const [dimensionList, setDimensionList] = useState({ row: ['noon', 'time'], col: ['year', 'month', 'week'] })
-  const [targetChildren, setTargetChildren] = useState(targetChildrenConfig)
+  // const [dimensionList, setDimensionList] = useState()
+  // const [targetChildren, setTargetChildren] = useState(indicators)
+  // const [tree, setTree] = useState<TreePluginValue>(treeConfig)
+  const treeConfig = {
+    indicatorList: [
+      {
+        key: '目标收入',
+        value: '目标收入',
+        isLeaf: true,
+        children: [] as any[],
+        sortable: true,
+      },
+      {
+        key: '实际收入',
+        value: '实际收入',
+        isLeaf: true,
+        children: [],
+        sortable: true,
+      },
+      {
+        key: '目标达成率',
+        value: '目标达成率',
+        isLeaf: true,
+        children: [],
+        sortable: true,
+      },
+      {
+        key: '收入月环比',
+        value: '收入月环比',
+        isLeaf: true,
+        children: [],
+        sortable: true,
+      },
+    ],
+    dimensionMap: { row: ['noon', 'time'], col: ['year', 'month', 'week'] }, // 与后端对接商讨dimensionMap的值
+    topDimensionTreeUrl: 'http://localhost:3002/get_top_tree',
+    leftDimensionTreeUrl: 'http://localhost:3002/get_left_tree',
+    valuesUrl: 'http://localhost:3002/get_values',
+    onSort: (colIndex: any, sortOrder: any) => {},
+  }
 
-  const { treePlugin, setIsLoading, setLeftTree, setTopTree } = useTreePlugin({
-    makeTopChildren,
-    makeLeftChildren,
-    targetChildren,
-    getValues,
-    dimensionList,
-    treeInit,
-  })
+  const [treePluginSource, setTreePluginSource] = useState(treeConfig)
+  const { treePlugin } = useTreePlugin(treePluginSource)
 
   return (
     <div>

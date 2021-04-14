@@ -1,4 +1,4 @@
 export { BaseTable, BaseTableProps, PrimaryKey } from './table'
 export { LoadingContentWrapperProps } from './loading'
 export { Classes, BaseTableCSSVariables } from './styles'
-export { TreePluginValue } from './interfaces'
+export { TreePluginSource } from './interfaces'

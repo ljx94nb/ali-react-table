@@ -60,13 +60,27 @@ export interface SortOptions {
   sortOrder: SortOrder
 }
 
+interface DataSource {
+  type: string
+  options: {
+    uri: string
+    env: string
+    params: {
+      chartId: number
+      [key: string]: any
+    }
+  }
+}
+
 export interface TreePluginSource {
-  indicatorList: IndicatorNode[]
-  dimensionMap: { row: string[]; col: string[] }
-  topDimensionTreeUrl: string
-  leftDimensionTreeUrl: string
-  valuesUrl: string
+  indicators: IndicatorNode[]
+  leftDimensions: string[]
+  topDimensions: string[]
+  topDimensionDataSource: DataSource
+  leftDimensionDataSource: DataSource
+  dataSource: DataSource
   onSort?(colIndex: number, sortOrder: SortItem): void
+  decorateValue?(indicatorKey: string, value: any): any
 }
 
 // pipeline的plugins对象结构

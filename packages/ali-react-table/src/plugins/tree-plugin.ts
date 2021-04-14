@@ -6,8 +6,14 @@ import has from 'lodash.has'
 // import deepClone from 'lodash/cloneDeep'
 import { SortItem, SortOrder } from '../interfaces'
 import { treeToFlat, flatToTree, getPath, deepClone, getTreeMinDepth } from '../utils'
-import { LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
-import { getValues, makeLeftChildren, makeTopChildren, updateTargetChildren } from '../api/tableCellConfig'
+import { IndicatorNode, LeftCrossTreeNode, TopCrossTreeNode } from '../pivot/cross-table'
+import {
+  getValues,
+  makeLeftChildren,
+  makeTopChildren,
+  updateTargetChildren,
+  addPathToTopChildren,
+} from '../api/tableCellConfig'
 // import { ArtColumn } from '../interfaces'
 
 interface ColExpandedListType {
@@ -15,9 +21,19 @@ interface ColExpandedListType {
   value: string
 }
 
-type OpenCode = 'row' | 'col' | 'none'
+type OpenCode = 'row' | 'col' | 'sort' | 'none'
 
 export function useTreePlugin(treePluginSource: TreePluginSource) {
+  const {
+    indicators,
+    leftDimensions,
+    topDimensions,
+    topDimensionDataSource,
+    leftDimensionDataSource,
+    dataSource,
+    onSort,
+    decorateValue,
+  } = treePluginSource
   const [leftTree, setLeftTree] = useState<LeftCrossTreeNode[]>([])
   const [topTree, setTopTree] = useState<TopCrossTreeNode[]>([])
   const [openKeys, setOpenKeys] = useState([])
@@ -49,7 +65,10 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   const requestPathSet = useRef<Set<string>>(new Set())
   const requestPathArr = useRef<string[]>([])
 
-  const { indicatorList, dimensionMap, topDimensionTreeUrl, leftDimensionTreeUrl, valuesUrl, onSort } = treePluginSource
+  useEffect(() => {
+    changeIndicators(indicators)
+  }, [])
+
   // 定时器
   let clock: NodeJS.Timeout = null
 
@@ -62,6 +81,43 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   }
 
   /**
+   * 处理indicators：增加key的value
+   * @param indicators 指标数组
+   */
+  function changeIndicators(indicators: IndicatorNode[]) {
+    indicators.forEach((i) => {
+      i.key = i.dataIndex
+      i.value = i.title as string
+      if (i.children && i.children.length) {
+        changeIndicators(i.children)
+      }
+    })
+  }
+
+  /**
+   * 处理传进来的treePluginSource
+   * @param treePluginSource treePluginSource
+   * @returns treePluginSource
+   */
+  // function changeTreePluginSource(treePluginSource: TreePluginSource) {
+  //   changeIndicators(treePluginSource.indicators)
+  //   console.log(treePluginSource)
+  //   return treePluginSource
+  // }
+
+  /**
+   * 将leftPath和topPath结合生成requestPath
+   * @param leftPath 左子树的路径
+   * @param topPath 上子树的路径
+   * @returns requestPath 生成的请求路径字符串
+   */
+  function combinePath(leftPath: string[], topPath: string[]): string {
+    const leftPathStr = leftPath.map((key: string, index: number) => `${leftDimensions[index]}:${key}`).join('_')
+    const topPathStr = topPath.map((key: string, index: number) => `${topDimensions[index]}:${key}`).join('_')
+    return `${leftPathStr}|${topPathStr}`
+  }
+
+  /**
    * 处理列最后的key找到列的路径
    */
   async function selectLastRequestKeys(
@@ -69,17 +125,14 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     leftPath: string[],
     rowIndex: number,
     totalLength: number,
+    sortOptionsMap?: any,
   ) {
     for (let colIndex = 0; colIndex < lastRequestKeys.length; colIndex++) {
       const topPath = findRequestPath([{ key: 'root', children: topTree }], lastRequestKeys[colIndex])
       topPath.splice(topPath.indexOf('root'), 1)
-      for (let i = 0, len = topPath.length; i < len; i++) {
-        topPath[i] = `${dimensionMap.col[i]}:${topPath[i]}`
-      }
       findFlag.current = false
-
       if (leftPath.length && topPath.length) {
-        const requestPath = `${leftPath.join('_')}|${topPath.join('_')}`
+        const requestPath = combinePath(leftPath, topPath)
         // console.log(values.current)
         if (!has(values.current, pathKeyToPathArr(requestPath)) || sortColIndex.current !== -1)
           requestPathSet.current.add(requestPath)
@@ -87,7 +140,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
         if (!clock)
           clock = setTimeout(() => {
             requestPathArr.current = Array.from(requestPathSet.current)
-            requestData(requestPathArr.current)
+            requestData(requestPathArr.current, sortOptionsMap)
             requestPathSet.current.clear()
           }, 0)
       }
@@ -97,13 +150,10 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   /**
    * 处理行最后的路径，找到行的路径
    */
-  function selectRowLastRequestKeys(rowLastRequestKeys: string[]) {
+  function selectRowLastRequestKeys(rowLastRequestKeys: string[], sortOptionsMap?: any) {
     rowLastRequestKeys.forEach((rowKey: string, rowIndex: number) => {
       const leftPath = findRequestPath([{ key: 'root', children: leftTree }], rowKey)
       leftPath.splice(leftPath.indexOf('root'), 1)
-      for (let i = 0, len = leftPath.length; i < len; i++) {
-        leftPath[i] = `${dimensionMap.row[i]}:${leftPath[i]}`
-      }
       findFlag.current = false
       if (openCode === 'row') {
         selectLastRequestKeys(
@@ -111,6 +161,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
           leftPath,
           rowIndex,
           rowLastRequestKeys.length,
+          sortOptionsMap,
         )
       } else if (openCode === 'col') {
         selectLastRequestKeys(lastRequestKeys, leftPath, rowIndex, rowLastRequestKeys.length)
@@ -121,15 +172,14 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   /**
    * 请求数据矩阵
    */
-  async function requestData(requestPathArr: string[]) {
+  async function requestData(requestPathArr: string[], sortOptionsMap: any) {
     try {
       if (requestPathArr.length) {
         setIsLoading(true)
-        const sortOptionsMap = getSortOptions(sortOrderTarget)
         const { data, sortStartIndex, sortEndIndex } = await getValues(
-          valuesUrl,
+          dataSource.options.uri,
           requestPathArr,
-          indicatorList.map((i) => i.key),
+          indicators,
           sortOptionsMap,
         )
         // console.log(data, sortStartIndex, sortEndIndex)
@@ -175,21 +225,22 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     try {
       // 初始化列配置
       lastRequestKeys.length = 0
-      const topTreeConfig = await makeTopChildren(topDimensionTreeUrl, 'root', dimensionMap.col[0], indicatorList)
+      const topTreeConfig = await makeTopChildren(
+        topDimensionDataSource.options.uri,
+        'root',
+        topDimensions[0],
+        indicators,
+        [],
+        false,
+      )
       topTreeConfig.forEach((item: any) => {
-        item.path = [item.key]
-        item.expanded = false
-        item.children.forEach((child: any) => {
-          child.path = [...item.path, child.key]
-        })
-        item.render === undefined && lastRequestKeys.push(item.key)
+        item.key && item.render === undefined && lastRequestKeys.push(item.key)
       })
 
       // 初始化行配置
       rowLastRequestKeys.length = 0
-      const leftTreeConfig = await makeLeftChildren(leftDimensionTreeUrl, 'root', dimensionMap.row[0])
+      const leftTreeConfig = await makeLeftChildren(leftDimensionDataSource.options.uri, 'root', leftDimensions[0], [])
       leftTreeConfig.forEach((item: any) => {
-        item.path = [item.key]
         rowLastRequestKeys.push(item.key)
       })
 
@@ -210,25 +261,30 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     setIsLoading(false)
   }
 
-  // 当indicatorList发生变化时，更新topTree
+  // 当indicators发生变化时，更新topTree
   useEffect(() => {
     setIsLoading(true)
     const topTreeClone = deepClone(topTree)
     updateTargetChildren(
       topTreeClone,
-      indicatorList.map((i) => i.key),
+      indicators.map((i) => i.key),
     )
     setTopTree(topTreeClone)
     setIsLoading(false)
-  }, [indicatorList])
+  }, [indicators])
 
   // 懒加载数据，根据展开的行配置和列配置
   useEffect(() => {
-    // console.log(isOpenRow, isOpenCol)
+    console.log(openCode)
     if (openCode === 'col') {
       selectRowLastRequestKeys(rowExpandedList.map((i: ColExpandedListType) => i.value))
-    } else if (openCode === 'row') {
-      selectRowLastRequestKeys(rowLastRequestKeys)
+    } else {
+      const sortOptionsMap = getSortOptions(sortOrderTarget)
+      if (openCode === 'row') {
+        selectRowLastRequestKeys(rowLastRequestKeys, sortOptionsMap)
+      } else if (openCode === 'sort') {
+        requestData(sortOptionsMap.rowSortKeyList, sortOptionsMap)
+      }
     }
   }, [lastRequestKeys, rowLastRequestKeys, colExpandedList, rowExpandedList, openCode, sortOrderTarget])
 
@@ -263,30 +319,28 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     rowIndex: number,
     colIndex: number,
   ) => {
-    if (!leftNode.path || !topNode.path) throw new Error('行列配置缺少path字段')
+    if (!leftNode.path || !topNode.path)
+      throw new Error(`${leftNode.path ? JSON.stringify(topNode) : JSON.stringify(leftNode)}缺少path字段`)
     const leftPath = leftNode.path
     const topPath = topNode.path
     if (topNode.renderFun && typeof topNode.renderFun === 'function') {
-      const temp = leftPath.map((key: string, index: number) => `${dimensionMap.row[index]}:${key}`)
       const keyArr = colExpandedList.map((item: ColExpandedListType) => item.value)
-      const pathArr: string[] = []
-
+      const pathArr: string[][] = []
       keyArr.forEach((key: string) => {
         let path = findRequestPath([{ key: 'root', children: topTree }], key)
         path.shift()
-        path = path.map((item: string, index: number) => `${dimensionMap.col[index]}:${item}`)
-        pathArr.push(path.join('_'))
+        pathArr.push(path)
         findFlag.current = false
       })
-
       return topNode.renderFun(
         leftTree,
         topTree,
-        pathArr.map((key: string) => `${temp.join('_')}|${key}`),
+        pathArr.map((topPath: string[]) => combinePath(leftPath, topPath)),
       )
     }
     if (topNode.data !== undefined) return topNode.data
-    return get(valuesState, leftPath.concat(topPath), '')
+    const value = get(valuesState, leftPath.concat(topPath), '')
+    return decorateValue && typeof decorateValue === 'function' ? decorateValue(topNode.key, value) : value
   }
 
   /**
@@ -332,7 +386,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
    * 获取leftTree的所有keys的路径
    * @returns pathArr = ["noon:forenoon", "noon:forenoon_time:forenoon-9", "noon:forenoon_time:forenoon-10", "noon:forenoon_time:forenoon-11", "noon:afternoon", "noon:evening"]
    *  */
-  function getLeftTreeKeys(leftTree: any[], dimensionMap: string[], deepth = Infinity) {
+  function getLeftTreeKeys(leftTree: any[], dimensions: string[], deepth = Infinity) {
     function dfs(leftTree: any[], deep: number) {
       deep += 1
       leftTree.forEach((item: any) => {
@@ -351,7 +405,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
         !findFlag.current && getPath(item, key, tempArr, findFlag)
       })
       findFlag.current = false
-      tempArr = tempArr.map((item: string, index: number) => `${dimensionMap[index]}:${item}`)
+      tempArr = tempArr.map((item: string, index: number) => `${dimensions[index]}:${item}`)
       pathArr.push(tempArr.join('_'))
     })
     return pathArr
@@ -360,18 +414,22 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   // 获取排序请求的options：rowSortKeys、targetKey、sortOrder
   function getSortOptions(sortOrder: SortItem) {
     if (sortOrder.code !== '' && sortOrder.order !== 'none') {
-      let rowSortKeys = getLeftTreeKeys(leftTree, dimensionMap.row)
+      let rowSortKeys = getLeftTreeKeys(leftTree, leftDimensions)
       let sortCodePath = JSON.parse(sortOrder.code)
       const targetKey = sortCodePath.pop()
-      sortCodePath = sortCodePath.map((item: string, index: number) => `${dimensionMap.col[index]}:${item}`)
+      sortCodePath = sortCodePath.map((item: string, index: number) => `${topDimensions[index]}:${item}`)
       rowSortKeys = rowSortKeys.map((key: string) => `${key}|${sortCodePath.join('_')}`)
       // const leftTreeSortConfig = await getSortCol(rowSortKeys, targetKey, sortOrder.order)
       // setLeftTree(JSON.parse(JSON.stringify(leftTreeSortConfig)))
       // setIsLoading(false)
       return {
-        rowSortKeys,
-        targetKey,
-        sortOrder: sortOrder.order,
+        rowSortKeyList: rowSortKeys,
+        sortByList: [
+          {
+            key: targetKey,
+            orderType: sortOrder.order,
+          },
+        ],
       }
     }
   }
@@ -397,6 +455,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     onSort && onSort(colIndex, sortOrder)
     // requestPathArr.current.length = 0
     setSortOrderTarget({ ...sortOrder })
+    sortOrder.order === 'none' ? setOpenCode('none') : setOpenCode('sort')
     // getSortOptions(sortOrder)
   }
 
@@ -407,10 +466,8 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
         if (i.key === key) {
           if (i.expanded) {
             // const childrenLen = i.children.length
-            i.children = deepClone(indicatorList)
-            i.children.forEach((child: any) => {
-              child.path = [...i.path, child.key]
-            })
+            i.children = deepClone(indicators)
+            addPathToTopChildren(i.children, i.path)
             colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
               const pathLen = item.path.length - 1
               if (item.path[pathLen] === i.key) parentPath = item.path.slice(0, pathLen)
@@ -427,29 +484,15 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
               return item.value !== i.key
             })
             children = await makeTopChildren(
-              topDimensionTreeUrl,
+              topDimensionDataSource.options.uri,
               key,
-              dimensionMap.col[dimensionMap.col.indexOf(i.dimension) + 1],
-              indicatorList,
+              topDimensions[topDimensions.indexOf(i.dimension) + 1],
+              indicators,
+              i.path,
             )
-            children.unshift({
-              key: i.key,
-              value: i.totalField ?? '总计',
-              children: indicatorList,
-              isLeaf: true,
-            })
             i.children = deepClone(children)
             i.children.forEach((child: any) => {
-              child.expanded = false
-              const childKey = child.key
-              child.path = [...i.path]
-              if (childKey !== child.path[child.path.length - 1]) {
-                child.path.push(childKey)
-              }
-              lastRequestKeys.push(childKey)
-              child.children.forEach((item: any) => {
-                item.path = [...child.path, item.key]
-              })
+              child.key && lastRequestKeys.push(child.key)
             })
             openCol = 'col'
           }
@@ -474,7 +517,6 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     // requestPathArr.current.length = 0
     setTopTree([...topTreeClone])
     setOpenCode(openCol)
-    // console.log(topTreeClone)
     setColExpandedList(colExpandedListBoth)
     setLastRequestKeys([...lastRequestKeys])
   }
@@ -486,14 +528,13 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
         if (i.key === key) {
           if (action === 'expand') {
             children = await makeLeftChildren(
-              leftDimensionTreeUrl,
+              leftDimensionDataSource.options.uri,
               key,
-              dimensionMap.row[dimensionMap.row.indexOf(i.dimension) + 1],
+              leftDimensions[leftDimensions.indexOf(i.dimension) + 1],
+              i.path,
             )
             i.children = deepClone(children)
             i.children.forEach((child: any) => {
-              const childKey = child.key
-              child.path = [...i.path, childKey]
               rowLastRequestKeys.push(child.key)
             })
             rowExpandedList.forEach((item: ColExpandedListType) => {

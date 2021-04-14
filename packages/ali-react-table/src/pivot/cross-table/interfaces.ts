@@ -1,6 +1,18 @@
 import { ReactNode } from 'react'
 import { ArtColumnStaticPart, CellProps } from '../../interfaces'
 
+interface IndicatorNodeLinkCell {
+  component: 'Link'
+  componentProps: {
+    href: string
+    target?: '_blank' | '_self'
+  }
+}
+
+interface IndicatorNodeTrendCell {
+  component: 'Trend'
+}
+
 export interface CrossTableIndicator extends ArtColumnStaticPart {
   code: string
   expression?: string
@@ -41,10 +53,16 @@ export interface TopCrossTreeNode extends CrossTreeNode, Omit<ArtColumnStaticPar
   totalField?: string
   dimension?: string
   path?: string[]
+  expanded?: boolean
   renderFun?(leftTree: LeftCrossTreeNode[], topTree: TopCrossTreeNode[], path: string[]): ReactNode
 }
 
 // 描述指标数组indicatorList
-export interface IndicatorNode extends CrossTreeNode {
-  sortable: boolean
+export interface IndicatorNode extends Omit<CrossTreeNode, 'value' | 'children'> {
+  value?: string
+  sortable?: boolean
+  dataIndex?: string
+  path?: string[]
+  cell?: IndicatorNodeLinkCell | IndicatorNodeTrendCell
+  children: IndicatorNode[]
 }

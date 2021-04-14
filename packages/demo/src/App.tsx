@@ -6,7 +6,7 @@
 // import { BaseTable, ArtColumn, useTablePipeline, features, PaginationPlugin, usePlugins } from 'ali-react-table'
 
 import React, { useEffect, useState } from 'react'
-import { BaseTable, useTreePlugin, deepClone, TreePluginValue } from 'ali-react-table'
+import { BaseTable, useTreePlugin, deepClone, TreePluginSource } from 'ali-react-table'
 import { CrossTreeTable } from 'ali-react-table/pivot'
 // import _ from 'lodash'
 // import { format, cdnData } from '../../website/src/assets'
@@ -150,42 +150,119 @@ function App() {
   // const [dimensionList, setDimensionList] = useState()
   // const [targetChildren, setTargetChildren] = useState(indicators)
   // const [tree, setTree] = useState<TreePluginValue>(treeConfig)
-  const treeConfig = {
-    indicatorList: [
+  const treeConfig: TreePluginSource = {
+    // p0
+    indicators: [
       {
-        key: '目标收入',
-        value: '目标收入',
-        isLeaf: true,
-        children: [] as any[],
-        sortable: true,
+        title: '分组1',
+        children: [
+          {
+            dataIndex: '目标收入',
+            title: '目标收入',
+            isLeaf: true,
+            children: [],
+            sortable: true,
+          },
+          {
+            title: '分组2',
+            children: [
+              {
+                dataIndex: '实际收入',
+                title: '实际收入',
+                isLeaf: true,
+                children: [],
+                sortable: true,
+              },
+              {
+                dataIndex: '目标达成率',
+                title: '目标达成率',
+                isLeaf: true,
+                children: [],
+                sortable: true,
+                cell: {
+                  component: 'Link',
+                  componentProps: {
+                    href: 'https://item.taobao.com/item.htm?id=${record.item_id}',
+                    target: '_blank',
+                  },
+                },
+              },
+            ],
+          },
+        ],
       },
       {
-        key: '实际收入',
-        value: '实际收入',
-        isLeaf: true,
-        children: [],
-        sortable: true,
-      },
-      {
-        key: '目标达成率',
-        value: '目标达成率',
-        isLeaf: true,
-        children: [],
-        sortable: true,
-      },
-      {
-        key: '收入月环比',
-        value: '收入月环比',
+        dataIndex: '收入月环比',
+        title: '收入月环比',
         isLeaf: true,
         children: [],
         sortable: true,
       },
     ],
-    dimensionMap: { row: ['noon', 'time'], col: ['year', 'month', 'week'] }, // 与后端对接商讨dimensionMap的值
-    topDimensionTreeUrl: 'http://localhost:3002/get_top_tree',
-    leftDimensionTreeUrl: 'http://localhost:3002/get_left_tree',
-    valuesUrl: 'http://localhost:3002/get_values',
-    onSort: (colIndex: any, sortOrder: any) => {},
+    leftDimensions: ['noon', 'time'],
+    topDimensions: ['year', 'month', 'week'],
+    // dimensionMap: { row: ['noon', 'time'], col: ['year', 'month', 'week'] }, // 与后端对接商讨dimensionMap的值
+    topDimensionDataSource: {
+      type: 'bzb',
+      options: {
+        uri: 'http://localhost:3002/get_top_tree',
+        env: 'pre',
+        params: {
+          chartId: 16,
+        },
+      },
+    },
+    leftDimensionDataSource: {
+      type: 'bzb',
+      options: {
+        uri: 'http://localhost:3002/get_left_tree',
+        env: 'pre',
+        params: {
+          chartId: 16,
+        },
+      },
+    },
+    dataSource: {
+      type: 'bzb',
+      options: {
+        uri: 'http://localhost:3002/get_values',
+        env: 'pre',
+        params: {
+          chartId: 16,
+        },
+      },
+    },
+    //p0
+    // operatorColumn: {
+    //   cell: {
+    //     component: 'Operators',
+    //     componentProps: {
+    //       value: [
+    //         {
+    //           btnText: '查看',
+    //           btnType: 'link',
+    //           text: true,
+    //           type: 'primary',
+    //           href: '//www.tmall.com',
+    //         },
+    //       ],
+    //     },
+    //   },
+    //   title: '操作列',
+    //   dataIndex: 'opts',
+    //   lock: true,
+    //   showConfig: {
+    //     width: 250,
+    //   },
+    //   width: 250,
+    // }
+    // onSort: (colIndex: any, sortOrder: any) => {},
+    // decorateValue: (indicatorKey: string, value: any) => {
+    //   if (indicatorKey === '目标收入') {
+    //     return `💇‍♂️${value}`
+    //   }
+    //   return value
+    // },
   }
 
   const [treePluginSource, setTreePluginSource] = useState(treeConfig)

@@ -236,7 +236,7 @@ export default function TableHeader({
       setSortOrder({ code, order })
     }
     if (col.isLeaf) return
-    if (typeof onChangeOpenColumns === 'function') onChangeOpenColumns(col.key, col.expanded)
+    if (typeof onChangeOpenColumns === 'function' && col.isLeaf === false) onChangeOpenColumns(col.key, col.expanded)
   }
 
   const thead = headerRenderInfo.leveled.map((wrappedCols, level) => {

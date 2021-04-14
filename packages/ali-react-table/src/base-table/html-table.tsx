@@ -24,7 +24,7 @@ export interface HtmlTableProps extends Required<Pick<BaseTableProps, 'getRowPro
     limit: number
   }
 
-  sortColIndex?: number
+  sortColPath?: string[]
 }
 
 export function HtmlTable({
@@ -34,7 +34,7 @@ export function HtmlTable({
   data,
   verticalRenderInfo: verInfo,
   horizontalRenderInfo: hozInfo,
-  sortColIndex,
+  sortColPath,
 }: HtmlTableProps) {
   const { flat, horizontalRenderRange: hoz } = hozInfo
 
@@ -146,7 +146,7 @@ export function HtmlTable({
           textAlign: column.align,
           ...cellProps.style,
           ...positionStyle,
-          backgroundColor: colIndex === sortColIndex ? '#eee' : '#fff',
+          backgroundColor: JSON.stringify(column.path) === JSON.stringify(sortColPath) ? '#eee' : '#fff',
         },
       },
       cellContent,

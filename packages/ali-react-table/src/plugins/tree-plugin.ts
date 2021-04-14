@@ -60,7 +60,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
   // 保存排序的状态
   const [sortOrderTarget, setSortOrderTarget] = useState<SortItem>({ code: '', order: 'none' })
   // 保存属于排序状态的colIndex
-  const sortColIndex = useRef<number>(-1)
+  const sortColPath = useRef<string[]>([])
   // 存储请求路径的数组，方便一次请求后端
   const requestPathSet = useRef<Set<string>>(new Set())
   const requestPathArr = useRef<string[]>([])
@@ -134,7 +134,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
       if (leftPath.length && topPath.length) {
         const requestPath = combinePath(leftPath, topPath)
         // console.log(values.current)
-        if (!has(values.current, pathKeyToPathArr(requestPath)) || sortColIndex.current !== -1)
+        if (!has(values.current, pathKeyToPathArr(requestPath)) || sortColPath.current.length)
           requestPathSet.current.add(requestPath)
 
         if (!clock)
@@ -450,7 +450,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
     //   sortOrder.order === 'none' && leftTreeBuffer.current.length ? [...leftTreeBuffer.current] : leftTreeClone,
     // )
     // 后端排序的逻辑：请求后端排序接口
-    sortColIndex.current = sortOrder.order === 'none' ? -1 : colIndex
+    sortColPath.current = sortOrder.order === 'none' ? [] : JSON.parse(sortOrder.code)
     // sort的回调
     onSort && onSort(colIndex, sortOrder)
     // requestPathArr.current.length = 0
@@ -592,7 +592,7 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
       getValue,
       isLeafNode,
       isLoading,
-      sortColIndex: sortColIndex.current,
+      sortColPath: sortColPath.current,
     },
     setIsLoading,
     setLeftTree,

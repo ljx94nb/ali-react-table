@@ -468,21 +468,14 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
             // const childrenLen = i.children.length
             i.children = deepClone(indicators)
             addPathToTopChildren(i.children, i.path)
-            colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
+            colExpandedListBoth = colExpandedListBoth.filter((item: ColExpandedListType) => {
               const pathLen = item.path.length - 1
               if (item.path[pathLen] === i.key) parentPath = item.path.slice(0, pathLen)
               return !item.path.includes(i.key)
             })
-            // parentPath = colExpandedList[0].key
             openCol = 'none'
             lastRequestKeys.push(i.key)
-            // console.log(colExpandedList, lastRequestKeys)
           } else {
-            colExpandedList = colExpandedList.filter((item: ColExpandedListType) => {
-              if (item.value === i.key) parentPath = item.path
-              else openKey = i.key
-              return item.value !== i.key
-            })
             children = await makeTopChildren(
               topDimensionDataSource.options.uri,
               key,
@@ -495,6 +488,14 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
               child.key && lastRequestKeys.push(child.key)
             })
             openCol = 'col'
+            colExpandedListBoth.forEach((item: ColExpandedListType) => {
+              if (item.value === i.key) parentPath = item.path
+              else openKey = i.key
+            })
+            colExpandedListBoth = [
+              ...colExpandedListBoth,
+              ...lastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),
+            ]
           }
           i.expanded = !i.expanded
         } else {
@@ -503,16 +504,13 @@ export function useTreePlugin(treePluginSource: TreePluginSource) {
       }
     }
 
+    let colExpandedListBoth = deepClone(colExpandedList)
     let openCol = openCode
     let children: any[] = []
     let parentPath: string[] = ['root']
     let openKey: string
     lastRequestKeys.length = 0
     await dfs(topTreeClone)
-    const colExpandedListBoth = [
-      ...colExpandedList,
-      ...lastRequestKeys.map((i: string) => ({ path: parentPath.concat(openKey ? openKey : []), value: i })),
-    ]
 
     // requestPathArr.current.length = 0
     setTopTree([...topTreeClone])
